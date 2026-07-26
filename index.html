@@ -202,6 +202,8 @@
   .stamp.pdf{color:var(--stamp-red);}
   .stamp.video{color:var(--stamp-blue);}
   .stamp.photo{color:var(--stamp-green);}
+  .stamp.document{color:var(--stamp-blue);}
+  .stamp.archive{color:var(--stamp-amber);}
   .stamp.other{color:var(--ink-soft);}
 
   .card-title{
@@ -388,8 +390,10 @@
       <option value="tool">Tool</option>
       <option value="note">Note</option>
       <option value="pdf">PDF</option>
+      <option value="document">Document</option>
       <option value="video">Video</option>
       <option value="photo">Photo</option>
+      <option value="archive">Archive/Zip</option>
       <option value="other">Other</option>
     </select>
     <button class="add-btn" id="openAdd">+ Add item</button>
@@ -431,8 +435,10 @@
         <div class="type-opt" data-type="tool">Tool</div>
         <div class="type-opt" data-type="note">Note</div>
         <div class="type-opt" data-type="pdf">PDF</div>
+        <div class="type-opt" data-type="document">Document</div>
         <div class="type-opt" data-type="video">Video</div>
         <div class="type-opt" data-type="photo">Photo</div>
+        <div class="type-opt" data-type="archive">Archive/Zip</div>
         <div class="type-opt" data-type="other">Other</div>
       </div>
     </div>
@@ -627,14 +633,16 @@ async function uploadToStorage(file, kind){
 
   let uploadBlob = file;
   let ext = 'bin';
+  const nameParts = (file.name || '').split('.');
+  const origExt = nameParts.length > 1 ? nameParts.pop().toLowerCase() : '';
 
   if(kind === 'photo'){
     progress.textContent = 'Resizing image…';
     uploadBlob = await compressImage(file);
     ext = 'jpg';
     progress.textContent = 'Uploading…';
-  } else if(kind === 'pdf'){
-    ext = 'pdf';
+  } else {
+    ext = origExt || 'bin';
   }
 
   const path = `${kind}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
@@ -715,6 +723,8 @@ grid.addEventListener('click', (e)=>{
 searchInput.addEventListener('input', render);
 typeFilter.addEventListener('change', render);
 
+const UPLOAD_TYPES = ['photo', 'pdf', 'document', 'archive', 'other'];
+
 function setType(type){
   currentType = type;
   [...typeGrid.children].forEach(el=>{
@@ -729,16 +739,26 @@ function setType(type){
   fFile.value = '';
   document.getElementById('uploadProgress').style.display = 'none';
 
-  if(type === 'photo'){
+  if(UPLOAD_TYPES.includes(type)){
     urlField.style.display = 'none';
     fileField.style.display = 'block';
-    fFile.accept = 'image/*';
-    fileHint.textContent = 'Photo will be automatically resized (max 1600px) and compressed before upload to save space.';
-  } else if(type === 'pdf'){
-    urlField.style.display = 'none';
-    fileField.style.display = 'block';
-    fFile.accept = 'application/pdf';
-    fileHint.textContent = 'PDF uploads as-is (up to ~50MB on the free plan).';
+
+    if(type === 'photo'){
+      fFile.accept = 'image/*';
+      fileHint.textContent = 'Photo will be automatically resized (max 1600px) and compressed before upload to save space.';
+    } else if(type === 'pdf'){
+      fFile.accept = '.pdf,application/pdf';
+      fileHint.textContent = 'PDF uploads as-is (up to ~50MB on the free plan).';
+    } else if(type === 'document'){
+      fFile.accept = '.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.html,.htm,.csv,.rtf,.odt,.ods,.odp';
+      fileHint.textContent = 'Word, Excel, PowerPoint, HTML, Markdown, TXT, CSV, and similar files — uploads as-is.';
+    } else if(type === 'archive'){
+      fFile.accept = '.zip,.rar,.7z,.tar,.gz';
+      fileHint.textContent = 'ZIP, RAR, 7z, or other archive files — uploads as-is (up to ~50MB on the free plan).';
+    } else if(type === 'other'){
+      fFile.accept = '';
+      fileHint.textContent = "Any file type — for something Google Sheets or a cloud doc, use Link instead, since those aren't downloadable files.";
+    }
   } else if(type === 'video'){
     urlField.style.display = 'block';
     fileField.style.display = 'none';
@@ -750,10 +770,11 @@ function setType(type){
     urlFieldLabel.textContent = 'Link / URL (optional for notes)';
     urlHint.textContent = '';
   } else {
+    // link, tool
     urlField.style.display = 'block';
     fileField.style.display = 'none';
     urlFieldLabel.textContent = 'Link / URL';
-    urlHint.textContent = '';
+    urlHint.textContent = type === 'link' ? "For Google Sheets, Google Docs, or other cloud files, paste the share link here." : '';
   }
 }
 
@@ -812,7 +833,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
     return;
   }
 
-  if((currentType === 'photo' || currentType === 'pdf') && fFile.files[0]){
+  if(UPLOAD_TYPES.includes(currentType) && fFile.files[0]){
     saveBtn.disabled = true;
     try{
       url = await uploadToStorage(fFile.files[0], currentType);
@@ -822,7 +843,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
       return;
     }
     saveBtn.disabled = false;
-  } else if((currentType === 'photo' || currentType === 'pdf') && !editingId && !url){
+  } else if(UPLOAD_TYPES.includes(currentType) && !editingId && !url){
     alert('Please choose a file to upload.');
     return;
   }
