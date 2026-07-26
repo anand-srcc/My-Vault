@@ -268,6 +268,8 @@
   .grid.list-view .card{ flex-direction:row; align-items:center; gap:14px; padding:10px 14px; }
   .grid.list-view .card-title{ padding-left:0; flex:1; font-size:14px; }
   .grid.list-view .card-body, .grid.list-view .card-tags{ display:none; }
+  .grid.list-view .remark-input{ display:none; }
+  .grid.list-view .card-title{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .grid.list-view .card-foot{ border-top:none; padding-top:0; margin-top:0; }
   .grid.list-view .card::before{ display:none; }
   .select-check{ margin-right:8px; width:16px; height:16px; cursor:pointer; }
@@ -1137,7 +1139,42 @@ async function resolveOpenUrl(raw){
   return raw;
 }
 
-let selectMode = false;
+// --- Share a saved item to any other app (WhatsApp, Chrome, etc.) ---
+async function shareItem(id){
+  const it = items.find(x=>x.id === id);
+  if(!it) return;
+
+  let shareUrl = '';
+  try{
+    if(it.url) shareUrl = it.url.startsWith('sb:') ? await resolveOpenUrl(it.url) : it.url;
+  }catch(e){ /* fall through with empty url */ }
+
+  const shareData = {
+    title: it.title || 'Vault item',
+    text: it.notes ? it.notes.slice(0, 200) : (it.title || ''),
+  };
+  if(shareUrl) shareData.url = shareUrl;
+
+  if(navigator.share){
+    try{
+      await navigator.share(shareData);
+    }catch(e){
+      // user cancelled the share sheet — nothing to do
+    }
+    return;
+  }
+
+  // Fallback for browsers without Web Share API (most desktops): copy to clipboard.
+  const clip = [shareData.title, shareUrl].filter(Boolean).join('\n');
+  try{
+    await navigator.clipboard.writeText(clip);
+    statusMsg.style.display = 'block';
+    statusMsg.textContent = 'Link copied to clipboard ✓';
+    setTimeout(()=>{ statusMsg.style.display = 'none'; }, 2000);
+  }catch(e){
+    alert('Share nahi ho paya. Ye copy kar lo:\n\n' + clip);
+  }
+}
 let selectedIds = new Set();
 let currentSection = 'vault';
 let currentGroup = 'all';
@@ -1221,6 +1258,7 @@ function render(){
         <span class="card-date">${fmtDate(it.createdAt)}</span>
         <span class="card-actions">
           ${openControl}
+          <button data-action="share" data-id="${it.id}" title="Share">📤 Share</button>
           <button data-action="edit" data-id="${it.id}">Edit</button>
           <button data-action="del" class="del" data-id="${it.id}">Delete</button>
         </span>
@@ -1343,6 +1381,10 @@ grid.addEventListener('click', (e)=>{
   }
   if(btn.dataset.action === 'openpdf'){
     openPdfAnnotator(btn.dataset.url, btn.dataset.id);
+    return;
+  }
+  if(btn.dataset.action === 'share'){
+    shareItem(btn.dataset.id);
     return;
   }
   const id = btn.dataset.id;
