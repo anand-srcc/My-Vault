@@ -4,7 +4,7 @@
 
 const CACHE_NAME = 'vault-shell-v1';
 const SHELL_FILES = [
-  'vault_final.html',
+  'index.html',
   'manifest.json'
 ];
 
