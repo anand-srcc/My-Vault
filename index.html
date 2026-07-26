@@ -263,11 +263,12 @@
   .grid.list-view .card{ flex-direction:row; align-items:center; gap:14px; padding:10px 14px; flex-wrap:wrap; }
   .grid.list-view .card-title{ padding-left:0; flex:1 1 140px; min-width:0; font-size:14px; }
   .grid.list-view .card-body, .grid.list-view .card-tags, .grid.list-view .remark-inline{ display:none; }
-  .grid.list-view .card-foot{ border-top:none; padding-top:0; margin-top:0; }
+  .grid.list-view .card-foot{ border-top:none; padding-top:0; margin-top:0; flex-wrap:wrap; gap:6px 14px; }
   .grid.list-view .card::before{ display:none; }
   @media (max-width: 480px){
     .grid.list-view .card{ flex-direction:column; align-items:flex-start; }
-    .grid.list-view .card-title{ width:100%; }
+    .grid.list-view .card-title{ flex:none; width:100%; }
+    .grid.list-view .card-foot{ flex-wrap:wrap; gap:8px 12px; width:100%; }
     .remark-inline{ padding-left:0; }
     .card-top{ flex-wrap:wrap; }
   }
@@ -311,6 +312,8 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
+    flex-wrap:wrap;
+    gap:6px 14px;
     padding-left:18px;
     margin-top:4px;
     border-top:1px dashed var(--line);
@@ -319,9 +322,12 @@
   .card-date{
     font-family: ui-monospace, monospace;
     font-size:10.5px;
+    font-weight:700;
     color:var(--ink-soft);
+    white-space:nowrap;
+    margin-right:auto;
   }
-  .card-actions{display:flex;gap:10px;}
+  .card-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .card-actions button, .card-actions a{
     font-family: ui-monospace, monospace;
     font-size:11px;
@@ -429,7 +435,7 @@
   }
   .btn-primary:hover{background:var(--stamp-blue);}
   .hint{
-    font-size:11.5px;color:var(--ink-soft);margin-top:-6px;margin-bottom:12px;line-height:1.5;
+    font-size:11.5px;color:var(--ink-soft);margin-top:5px;margin-bottom:10px;line-height:1.5;
   }
   .status-msg{
     font-family:ui-monospace,monospace;
@@ -1264,11 +1270,11 @@ function dueCountdown(dueDate){
   const today = new Date(); today.setHours(0,0,0,0);
   const due = new Date(dueDate + 'T00:00:00');
   const diffDays = Math.round((due - today) / 86400000);
-  if(diffDays === 0) return 'Aaj hai!';
-  if(diffDays === 1) return 'Kal (1 din baaki)';
-  if(diffDays > 1) return diffDays + ' din baaki';
-  if(diffDays === -1) return '1 din pehle nikal gaya';
-  return Math.abs(diffDays) + ' din pehle nikal gaya';
+  if(diffDays === 0) return 'Due today!';
+  if(diffDays === 1) return 'Due tomorrow (1 day left)';
+  if(diffDays > 1) return diffDays + ' days left';
+  if(diffDays === -1) return 'Overdue by 1 day';
+  return 'Overdue by ' + Math.abs(diffDays) + ' days';
 }
 
 function isDueSoon(dueDate){
