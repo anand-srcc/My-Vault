@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Vault — Index</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  .setup-overlay{
+    position:fixed;inset:0;background:var(--paper,#e9e4d6);
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;z-index:100;
+  }
+  .setup-box{
+    max-width:480px;width:100%;
+    background:var(--paper-card,#f4f0e5);
+    border:1px solid var(--ink,#1c2430);
+    border-radius:4px;
+    padding:26px;
+  }
+  .setup-box h2{font-family:ui-monospace,monospace;margin:0 0 10px;}
+  .setup-box p{font-size:13.5px;line-height:1.6;color:var(--ink-soft,#3c4657);margin:0 0 16px;}
+  .setup-box label{
+    display:block;font-family:ui-monospace,monospace;font-size:11px;
+    letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft,#3c4657);
+    margin-bottom:5px;
+  }
+  .setup-box input{
+    width:100%;padding:9px 10px;margin-bottom:14px;
+    border:1px solid var(--line,#c9c0aa);border-radius:2px;
+    font-family:ui-monospace,monospace;font-size:13px;
+  }
+  .setup-box button{
+    width:100%;padding:10px;background:var(--ink,#1c2430);color:var(--paper-card,#f4f0e5);
+    border:none;border-radius:2px;font-size:13px;cursor:pointer;
+  }
+  .setup-err{color:var(--stamp-red,#a13d2c);font-size:12.5px;margin-top:-8px;margin-bottom:12px;display:none;}
+  :root{
+    --ink:#1c2430;
+    --ink-soft:#3c4657;
+    --paper:#e9e4d6;
+    --paper-card:#f4f0e5;
+    --line:#c9c0aa;
+    --stamp-blue:#2f5a6b;
+    --stamp-red:#a13d2c;
+    --stamp-green:#4a6b3f;
+    --stamp-amber:#a37624;
+    --focus:#2f5a6b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 24px);
+    color:var(--ink);
+    font-family: ui-sans-serif, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    min-height:100vh;
+  }
+  .mono{font-family: ui-monospace, "SF Mono", "Consolas", "IBM Plex Mono", monospace;}
+
+  /* Header / drawer label */
+  header{
+    padding:28px 24px 18px;
+    border-bottom:3px double var(--ink);
+    max-width:1080px;
+    margin:0 auto;
+  }
+  .eyebrow{
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  h1{
+    font-family: ui-monospace, "SF Mono", "IBM Plex Mono", monospace;
+    font-size:clamp(28px,5vw,42px);
+    margin:4px 0 2px;
+    letter-spacing:-0.5px;
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:14px;
+    max-width:560px;
+    line-height:1.5;
+  }
+
+  main{max-width:1080px;margin:0 auto;padding:20px 24px 80px;}
+
+  /* Search + filter bar styled like a catalog slot */
+  .bar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin:20px 0 22px;
+  }
+  .search-slot{
+    flex:1 1 260px;
+    display:flex;
+    align-items:center;
+    background:var(--paper-card);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    padding:0 12px;
+  }
+  .search-slot input{
+    border:none;background:none;outline:none;
+    width:100%;padding:11px 8px;
+    font-family: ui-monospace, monospace;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .search-slot::before{
+    content:"⌕";
+    font-size:16px;
+    color:var(--ink-soft);
+  }
+  select.type-filter{
+    font-family: ui-monospace, monospace;
+    font-size:12px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:11px 10px;
+    background:var(--paper-card);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    color:var(--ink);
+  }
+  .add-btn{
+    font-family: ui-monospace, monospace;
+    font-size:12px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    background:var(--ink);
+    color:var(--paper-card);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    padding:11px 18px;
+    cursor:pointer;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .add-btn:hover{background:var(--stamp-blue);}
+  .add-btn:active{transform:translateY(1px);}
+  .add-btn:focus-visible, .search-slot input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible{
+    outline:2px solid var(--focus); outline-offset:2px;
+  }
+
+  /* Grid of index cards */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+    gap:16px;
+  }
+
+  .card{
+    position:relative;
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:16px 16px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card::before{
+    /* punch hole */
+    content:"";
+    position:absolute;
+    top:12px; left:12px;
+    width:8px;height:8px;
+    border-radius:50%;
+    background:var(--paper);
+    border:1px solid var(--line);
+  }
+  .card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(28,36,48,0.12);
+  }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding-left:18px;
+  }
+  .stamp{
+    font-family: ui-monospace, monospace;
+    font-size:10px;
+    letter-spacing:1px;
+    font-weight:600;
+    padding:3px 7px;
+    border-radius:2px;
+    border:1px solid currentColor;
+    white-space:nowrap;
+  }
+  .stamp.link{color:var(--stamp-blue);}
+  .stamp.tool{color:var(--stamp-green);}
+  .stamp.note{color:var(--stamp-amber);}
+  .stamp.pdf{color:var(--stamp-red);}
+  .stamp.video{color:var(--stamp-blue);}
+  .stamp.photo{color:var(--stamp-green);}
+  .stamp.document{color:var(--stamp-blue);}
+  .stamp.archive{color:var(--stamp-amber);}
+  .stamp.other{color:var(--ink-soft);}
+
+  .card-title{
+    font-size:15.5px;
+    font-weight:600;
+    line-height:1.3;
+    padding-left:18px;
+    word-break:break-word;
+  }
+  .card-body{
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    padding-left:18px;
+    white-space:pre-wrap;
+    max-height:4.5em;
+    overflow:hidden;
+  }
+  .card-tags{
+    padding-left:18px;
+    display:flex;flex-wrap:wrap;gap:5px;
+  }
+  .tag{
+    font-family: ui-monospace, monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:2px 6px;
+    border-radius:10px;
+  }
+  .card-foot{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-left:18px;
+    margin-top:4px;
+    border-top:1px dashed var(--line);
+    padding-top:8px;
+  }
+  .card-date{
+    font-family: ui-monospace, monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+  }
+  .card-actions{display:flex;gap:10px;}
+  .card-actions button, .card-actions a{
+    font-family: ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    background:none;
+    border:none;
+    color:var(--stamp-blue);
+    cursor:pointer;
+    text-decoration:none;
+    padding:0;
+  }
+  .card-actions .del{color:var(--stamp-red);}
+  .card-actions button:hover, .card-actions a:hover{text-decoration:underline;}
+
+  /* Empty state */
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+  }
+  .empty .glyph{font-size:34px;margin-bottom:10px;}
+  .empty h3{font-family:ui-monospace,monospace;margin:0 0 6px;color:var(--ink);}
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(20,24,32,0.55);
+    display:none;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 16px;
+    overflow-y:auto;
+    z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:var(--paper-card);
+    border:1px solid var(--ink);
+    border-radius:4px;
+    width:100%;max-width:480px;
+    padding:22px 22px 20px;
+  }
+  .modal h2{
+    font-family:ui-monospace,monospace;
+    font-size:18px;margin:0 0 14px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .modal h2 button{
+    background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-soft);
+  }
+  .field{margin-bottom:13px;}
+  .field label{
+    display:block;
+    font-family:ui-monospace,monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--paper);
+    font-size:14px;
+    font-family:inherit;
+    color:var(--ink);
+    resize:vertical;
+  }
+  .field textarea{min-height:80px;}
+  .type-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  .type-opt{
+    font-family:ui-monospace,monospace;
+    font-size:11px;
+    text-align:center;
+    padding:8px 4px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    cursor:pointer;
+    background:var(--paper);
+    color:var(--ink-soft);
+  }
+  .type-opt.active{
+    background:var(--ink);
+    color:var(--paper-card);
+    border-color:var(--ink);
+  }
+  .modal-actions{
+    display:flex;justify-content:flex-end;gap:10px;margin-top:16px;
+  }
+  .btn-secondary{
+    background:none;border:1px solid var(--line);color:var(--ink-soft);
+    padding:9px 16px;border-radius:2px;cursor:pointer;font-size:13px;
+  }
+  .btn-primary{
+    background:var(--ink);color:var(--paper-card);border:1px solid var(--ink);
+    padding:9px 16px;border-radius:2px;cursor:pointer;font-size:13px;
+  }
+  .btn-primary:hover{background:var(--stamp-blue);}
+  .hint{
+    font-size:11.5px;color:var(--ink-soft);margin-top:-6px;margin-bottom:12px;line-height:1.5;
+  }
+  .status-msg{
+    font-family:ui-monospace,monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:10px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">PERSONAL ARCHIVE · CROSS-DEVICE</div>
+  <h1>The Vault</h1>
+  <div class="sub">Links, tools, notes, and pointers to your big files — one shelf, opens the same on your laptop and phone.</div>
+</header>
+
+<main>
+  <div class="bar">
+    <div class="search-slot">
+      <input type="text" id="searchInput" placeholder="Search title, tags, notes…" autocomplete="off">
+    </div>
+    <select class="type-filter" id="typeFilter">
+      <option value="all">All types</option>
+      <option value="link">Link</option>
+      <option value="tool">Tool</option>
+      <option value="note">Note</option>
+      <option value="pdf">PDF</option>
+      <option value="document">Document</option>
+      <option value="video">Video</option>
+      <option value="photo">Photo</option>
+      <option value="archive">Archive/Zip</option>
+      <option value="other">Other</option>
+    </select>
+    <button class="add-btn" id="openAdd">+ Add item</button>
+    <button class="btn-secondary" id="exportBtn" title="Download a backup JSON file">⬇ Export</button>
+    <button class="btn-secondary" id="importBtn" title="Restore from a backup JSON file">⬆ Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
+
+  <div id="statusMsg" class="status-msg" style="display:none;">Loading…</div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <div class="glyph">✦</div>
+    <h3>Nothing filed yet</h3>
+    <div>Add your first link, tool, or note above.</div>
+  </div>
+</main>
+
+<div class="setup-overlay" id="setupOverlay" style="display:none;">
+  <div class="setup-box">
+    <h2>Connect your Supabase project</h2>
+    <p>Paste the Project URL and anon public key from your Supabase project's Settings → API page. This is stored only in this browser, on this device.</p>
+    <label>Project URL</label>
+    <input type="text" id="setupUrl" placeholder="https://xxxxx.supabase.co">
+    <label>Anon public key</label>
+    <input type="text" id="setupKey" placeholder="eyJhbGciOi...">
+    <div class="setup-err" id="setupErr">Could not connect — check the URL/key and that the vault_items table exists.</div>
+    <button id="setupSave">Connect</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">New entry <button id="closeModal" aria-label="Close">✕</button></h2>
+
+    <div class="field">
+      <label>Type</label>
+      <div class="type-grid" id="typeGrid">
+        <div class="type-opt active" data-type="link">Link</div>
+        <div class="type-opt" data-type="tool">Tool</div>
+        <div class="type-opt" data-type="note">Note</div>
+        <div class="type-opt" data-type="pdf">PDF</div>
+        <div class="type-opt" data-type="document">Document</div>
+        <div class="type-opt" data-type="video">Video</div>
+        <div class="type-opt" data-type="photo">Photo</div>
+        <div class="type-opt" data-type="archive">Archive/Zip</div>
+        <div class="type-opt" data-type="other">Other</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="fTitle" placeholder="e.g. Family trip video, June 2026">
+    </div>
+
+    <div class="field" id="urlField">
+      <label id="urlFieldLabel">Link / URL</label>
+      <input type="text" id="fUrl" placeholder="https://…">
+      <div class="hint" id="urlHint">For large videos, upload to Google Drive / Dropbox first, then paste the share link here — this tool can't store the file itself, only the link.</div>
+    </div>
+
+    <div class="field" id="fileField" style="display:none;">
+      <label>Upload file</label>
+      <input type="file" id="fFile" accept="">
+      <div class="hint" id="fileHint"></div>
+      <div class="hint" id="uploadProgress" style="display:none;"></div>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="fNotes" placeholder="Any context, or the full note text for a Note-type entry"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Tags (comma separated)</label>
+      <input type="text" id="fTags" placeholder="work, reference, watch-later">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn-primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let items = [];
+let editingId = null;
+let currentType = 'link';
+let sb = null; // supabase client
+const TABLE = 'vault_items';
+
+function getCreds(){
+  return {
+    url: localStorage.getItem('vault_sb_url') || '',
+    key: localStorage.getItem('vault_sb_key') || ''
+  };
+}
+
+function initSupabase(){
+  const { url, key } = getCreds();
+  if(!url || !key) return false;
+  try{
+    sb = supabase.createClient(url, key);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+document.getElementById('setupSave').addEventListener('click', async ()=>{
+  const url = document.getElementById('setupUrl').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  const err = document.getElementById('setupErr');
+  err.style.display = 'none';
+  if(!url || !key){
+    err.textContent = 'Please fill in both fields.';
+    err.style.display = 'block';
+    return;
+  }
+  try{
+    const testClient = supabase.createClient(url, key);
+    const { error } = await testClient.from(TABLE).select('id').limit(1);
+    if(error) throw error;
+    localStorage.setItem('vault_sb_url', url);
+    localStorage.setItem('vault_sb_key', key);
+    sb = testClient;
+    document.getElementById('setupOverlay').style.display = 'none';
+    loadItems();
+  }catch(e){
+    err.textContent = 'Could not connect — check the URL/key and that the vault_items table exists.';
+    err.style.display = 'block';
+  }
+});
+
+const grid = document.getElementById('grid');
+const emptyState = document.getElementById('emptyState');
+const statusMsg = document.getElementById('statusMsg');
+const overlay = document.getElementById('overlay');
+const searchInput = document.getElementById('searchInput');
+const typeFilter = document.getElementById('typeFilter');
+const typeGrid = document.getElementById('typeGrid');
+const urlField = document.getElementById('urlField');
+
+function uid(){ return 'it_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, {day:'2-digit', month:'short', year:'numeric'});
+}
+
+async function loadItems(){
+  if(!sb) return;
+  statusMsg.style.display = 'block';
+  statusMsg.textContent = 'Loading…';
+  try{
+    const { data, error } = await sb.from(TABLE).select('*').order('created_at', {ascending:false});
+    if(error) throw error;
+    items = (data||[]).map(row=>({
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      url: row.url,
+      notes: row.notes,
+      tags: row.tags || [],
+      createdAt: new Date(row.created_at).getTime()
+    }));
+  }catch(e){
+    items = [];
+    statusMsg.textContent = 'Could not load: ' + (e.message || 'unknown error');
+    setTimeout(()=>{ statusMsg.style.display='none'; }, 3000);
+  }
+  statusMsg.style.display = 'none';
+  render();
+}
+
+async function insertItem(it){
+  const { data, error } = await sb.from(TABLE).insert([{
+    type: it.type, title: it.title, url: it.url, notes: it.notes, tags: it.tags
+  }]).select();
+  if(error){ showSaveError(error); return null; }
+  return data[0];
+}
+
+async function updateItem(id, it){
+  const { error } = await sb.from(TABLE).update({
+    type: it.type, title: it.title, url: it.url, notes: it.notes, tags: it.tags
+  }).eq('id', id);
+  if(error){ showSaveError(error); return false; }
+  return true;
+}
+
+async function deleteItem(id){
+  const { error } = await sb.from(TABLE).delete().eq('id', id);
+  if(error){ showSaveError(error); return false; }
+  return true;
+}
+
+function showSaveError(e){
+  statusMsg.style.display = 'block';
+  statusMsg.textContent = 'Save failed: ' + (e.message || 'unknown error');
+  setTimeout(()=>{ statusMsg.style.display='none'; }, 3000);
+}
+
+const BUCKET = 'vault-files';
+
+// Resize + compress an image file in the browser before upload.
+function compressImage(file, maxDim = 1600, quality = 0.8){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      let { width, height } = img;
+      if(width > maxDim || height > maxDim){
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob=>{
+        if(!blob) return reject(new Error('Could not compress image'));
+        resolve(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('Could not read image')); };
+    img.src = url;
+  });
+}
+
+function getContentType(ext, fallback){
+  const map = {
+    html:'text/html', htm:'text/html',
+    md:'text/plain', txt:'text/plain', csv:'text/plain',
+    pdf:'application/pdf',
+    png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', webp:'image/webp'
+  };
+  return map[ext] || fallback || 'application/octet-stream';
+}
+
+async function uploadToStorage(file, kind){
+  const progress = document.getElementById('uploadProgress');
+  progress.style.display = 'block';
+  progress.textContent = 'Uploading…';
+
+  let uploadBlob = file;
+  let ext = 'bin';
+  const nameParts = (file.name || '').split('.');
+  const origExt = nameParts.length > 1 ? nameParts.pop().toLowerCase() : '';
+
+  if(kind === 'photo'){
+    progress.textContent = 'Resizing image…';
+    uploadBlob = await compressImage(file);
+    ext = 'jpg';
+    progress.textContent = 'Uploading…';
+  } else {
+    ext = origExt || 'bin';
+  }
+
+  const contentType = kind === 'photo' ? 'image/jpeg' : getContentType(ext, file.type);
+  const path = `${kind}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, uploadBlob, {
+    contentType,
+    upsert: false
+  });
+  progress.style.display = 'none';
+  if(upErr) throw upErr;
+
+  const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function render(){
+  const q = searchInput.value.trim().toLowerCase();
+  const tf = typeFilter.value;
+  const filtered = items.filter(it=>{
+    if(tf !== 'all' && it.type !== tf) return false;
+    if(!q) return true;
+    const hay = [it.title, it.notes, (it.tags||[]).join(' ')].join(' ').toLowerCase();
+    return hay.includes(q);
+  }).sort((a,b)=> b.createdAt - a.createdAt);
+
+  grid.innerHTML = '';
+  emptyState.style.display = filtered.length ? 'none' : 'block';
+
+  for(const it of filtered){
+    const card = document.createElement('div');
+    card.className = 'card';
+    const tagsHtml = (it.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('');
+    const bodyText = it.notes ? escapeHtml(it.notes) : '';
+    const hasUrl = it.url && it.url.trim().length;
+
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="stamp ${it.type}">${it.type}</span>
+      </div>
+      <div class="card-title">${escapeHtml(it.title)}</div>
+      ${bodyText ? `<div class="card-body">${bodyText}</div>` : ''}
+      ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+      <div class="card-foot">
+        <span class="card-date">${fmtDate(it.createdAt)}</span>
+        <span class="card-actions">
+          ${hasUrl ? `<a href="${escapeAttr(it.url)}" target="_blank" rel="noopener noreferrer">Open</a>` : ''}
+          <button data-action="edit" data-id="${it.id}">Edit</button>
+          <button data-action="del" class="del" data-id="${it.id}">Delete</button>
+        </span>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+grid.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-action]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(btn.dataset.action === 'del'){
+    if(confirm('Delete this entry?')){
+      deleteItem(id).then(ok=>{
+        if(ok){
+          items = items.filter(it=>it.id !== id);
+          render();
+        }
+      });
+    }
+  } else if(btn.dataset.action === 'edit'){
+    openModal(id);
+  }
+});
+
+searchInput.addEventListener('input', render);
+typeFilter.addEventListener('change', render);
+
+const UPLOAD_TYPES = ['photo', 'pdf', 'document', 'archive', 'other'];
+
+function setType(type){
+  currentType = type;
+  [...typeGrid.children].forEach(el=>{
+    el.classList.toggle('active', el.dataset.type === type);
+  });
+
+  const fileField = document.getElementById('fileField');
+  const fFile = document.getElementById('fFile');
+  const fileHint = document.getElementById('fileHint');
+  const urlHint = document.getElementById('urlHint');
+  const urlFieldLabel = document.getElementById('urlFieldLabel');
+  fFile.value = '';
+  document.getElementById('uploadProgress').style.display = 'none';
+
+  if(UPLOAD_TYPES.includes(type)){
+    urlField.style.display = 'none';
+    fileField.style.display = 'block';
+
+    if(type === 'photo'){
+      fFile.accept = 'image/*';
+      fileHint.textContent = 'Photo will be automatically resized (max 1600px) and compressed before upload to save space.';
+    } else if(type === 'pdf'){
+      fFile.accept = '.pdf,application/pdf';
+      fileHint.textContent = 'PDF uploads as-is (up to ~50MB on the free plan).';
+    } else if(type === 'document'){
+      fFile.accept = '.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.html,.htm,.csv,.rtf,.odt,.ods,.odp';
+      fileHint.textContent = 'Word, Excel, PowerPoint, HTML, Markdown, TXT, CSV, and similar files — uploads as-is.';
+    } else if(type === 'archive'){
+      fFile.accept = '.zip,.rar,.7z,.tar,.gz';
+      fileHint.textContent = 'ZIP, RAR, 7z, or other archive files — uploads as-is (up to ~50MB on the free plan).';
+    } else if(type === 'other'){
+      fFile.accept = '';
+      fileHint.textContent = "Any file type — for something Google Sheets or a cloud doc, use Link instead, since those aren't downloadable files.";
+    }
+  } else if(type === 'video'){
+    urlField.style.display = 'block';
+    fileField.style.display = 'none';
+    urlFieldLabel.textContent = 'Video link';
+    urlHint.textContent = "Videos can be large, so upload to Google Drive / Dropbox first, then paste the share link here — storage space is limited on the free plan.";
+  } else if(type === 'note'){
+    urlField.style.display = 'block';
+    fileField.style.display = 'none';
+    urlFieldLabel.textContent = 'Link / URL (optional for notes)';
+    urlHint.textContent = '';
+  } else {
+    // link, tool
+    urlField.style.display = 'block';
+    fileField.style.display = 'none';
+    urlFieldLabel.textContent = 'Link / URL';
+    urlHint.textContent = type === 'link' ? "For Google Sheets, Google Docs, or other cloud files, paste the share link here." : '';
+  }
+}
+
+typeGrid.addEventListener('click', (e)=>{
+  const opt = e.target.closest('.type-opt');
+  if(!opt) return;
+  setType(opt.dataset.type);
+});
+
+function openModal(id){
+  editingId = id || null;
+  const modalTitleText = document.getElementById('modalTitle');
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fUrl').value = '';
+  document.getElementById('fNotes').value = '';
+  document.getElementById('fTags').value = '';
+  setType('link');
+
+  if(id){
+    const it = items.find(x=>x.id === id);
+    if(it){
+      modalTitleText.firstChild.textContent = 'Edit entry ';
+      document.getElementById('fTitle').value = it.title || '';
+      document.getElementById('fUrl').value = it.url || '';
+      document.getElementById('fNotes').value = it.notes || '';
+      document.getElementById('fTags').value = (it.tags||[]).join(', ');
+      setType(it.type || 'link');
+    }
+  } else {
+    modalTitleText.firstChild.textContent = 'New entry ';
+  }
+  overlay.classList.add('open');
+  document.getElementById('fTitle').focus();
+}
+
+function closeModalFn(){
+  overlay.classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('openAdd').addEventListener('click', ()=>openModal(null));
+document.getElementById('closeModal').addEventListener('click', closeModalFn);
+document.getElementById('cancelBtn').addEventListener('click', closeModalFn);
+overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModalFn(); });
+
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  const title = document.getElementById('fTitle').value.trim();
+  let url = document.getElementById('fUrl').value.trim();
+  const notes = document.getElementById('fNotes').value.trim();
+  const tags = document.getElementById('fTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const fFile = document.getElementById('fFile');
+  const saveBtn = document.getElementById('saveBtn');
+
+  if(!title){
+    alert('Give it a title first.');
+    return;
+  }
+
+  if(UPLOAD_TYPES.includes(currentType) && fFile.files[0]){
+    saveBtn.disabled = true;
+    try{
+      url = await uploadToStorage(fFile.files[0], currentType);
+    }catch(e){
+      alert('Upload failed: ' + (e.message || 'unknown error'));
+      saveBtn.disabled = false;
+      return;
+    }
+    saveBtn.disabled = false;
+  } else if(UPLOAD_TYPES.includes(currentType) && !editingId && !url){
+    alert('Please choose a file to upload.');
+    return;
+  }
+
+  const draft = { type: currentType, title, url, notes, tags };
+
+  if(editingId){
+    const ok = await updateItem(editingId, draft);
+    if(ok){
+      const it = items.find(x=>x.id === editingId);
+      if(it) Object.assign(it, draft);
+    }
+  } else {
+    const row = await insertItem(draft);
+    if(row){
+      items.push({
+        id: row.id, type: row.type, title: row.title, url: row.url,
+        notes: row.notes, tags: row.tags || [], createdAt: new Date(row.created_at).getTime()
+      });
+    }
+  }
+  closeModalFn();
+  render();
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && overlay.classList.contains('open')) closeModalFn();
+});
+
+// --- Export / Import (local backup, independent of Claude's storage) ---
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    itemCount: items.length,
+    items
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `vault-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+const importFileInput = document.getElementById('importFile');
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  importFileInput.value = '';
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const incoming = Array.isArray(parsed) ? parsed : (parsed.items || []);
+    if(!Array.isArray(incoming)) throw new Error('File does not look like a vault backup.');
+
+    const mode = confirm(
+      `Found ${incoming.length} item(s) in this backup.\n\nOK = Merge with your current items\nCancel = Replace all current items`
+    );
+
+    statusMsg.style.display = 'block';
+    statusMsg.textContent = 'Restoring…';
+
+    if(!mode){
+      // Replace: delete everything currently in the table first
+      for(const it of items){ await deleteItem(it.id); }
+    }
+    let restored = 0;
+    for(const it of incoming){
+      const row = await insertItem({
+        type: it.type || 'other', title: it.title || 'Untitled',
+        url: it.url || '', notes: it.notes || '', tags: it.tags || []
+      });
+      if(row) restored++;
+    }
+    await loadItems();
+    statusMsg.style.display = 'block';
+    statusMsg.textContent = `Restored ${restored} item(s).`;
+    setTimeout(()=>{ statusMsg.style.display = 'none'; }, 2500);
+  }catch(err){
+    alert('Could not read that file: ' + (err.message || 'invalid format'));
+  }
+});
+
+// --- Boot ---
+if(initSupabase()){
+  loadItems();
+} else {
+  document.getElementById('setupOverlay').style.display = 'flex';
+}
+</script>
+
+</body>
+</html>
