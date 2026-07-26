@@ -2,7 +2,7 @@
   "name": "The Vault",
   "short_name": "Vault",
   "description": "Personal student vault — links, files, notes, exam & CA prep.",
-  "start_url": "vault_final.html?source=pwa",
+  "start_url": "index.html?source=pwa",
   "scope": ".",
   "display": "standalone",
   "background_color": "#e9e4d6",
@@ -13,7 +13,7 @@
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "share_target": {
-    "action": "vault_final.html",
+    "action": "index.html",
     "method": "GET",
     "enctype": "application/x-www-form-urlencoded",
     "params": {
