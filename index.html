@@ -114,6 +114,32 @@
     flex-wrap:wrap;
     align-items:center;
     margin:20px 0 22px;
+    row-gap:12px;
+  }
+  .toolbar-group{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:5px 8px;
+    background:rgba(28,36,48,0.035);
+    border-radius:8px;
+  }
+  .toolbar-group--search{
+    flex:1 1 320px;
+    background:none;
+    padding:0;
+  }
+  .toolbar-group--primary{
+    background:none;
+    padding:0;
+  }
+  .btn-secondary, .add-btn, select.type-filter{
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .btn-secondary:hover{
+    box-shadow: 0 2px 6px rgba(28,36,48,0.10);
+    transform: translateY(-1px);
   }
   .search-slot{
     flex:1 1 260px;
@@ -274,7 +300,7 @@
   }
   .select-check{ margin-right:8px; width:16px; height:16px; cursor:pointer; }
   .section-tab.active{ background:var(--ink); color:var(--paper-card); }
-  #favToggleBtn.active, #binBtn.active, #recentBtn.active{ background:var(--ink); color:var(--paper-card); }
+  #favToggleBtn.active, #binBtn.active, #recentBtn.active, #aiSearchToggle.active{ background:var(--ink); color:var(--paper-card); }
   .group-chip.active{ background:var(--ink); color:var(--paper-card); }
   .card.pinned-item{ outline:2.5px solid #a37624; outline-offset:-1px; }
   .pin-btn.is-pinned{ filter:drop-shadow(0 0 2px rgba(163,118,36,0.6)); transform:scale(1.15); }
@@ -471,6 +497,25 @@
     <div id="calEventsList" style="font-size:13px;color:var(--ink-soft);">Not connected yet.</div>
   </div>
 
+  <div class="field" id="driveWidget" style="background:var(--paper-card);border:1px solid var(--line);border-radius:3px;padding:14px 16px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+      <label style="margin:0;">📁 Google Drive / Docs / Sheets</label>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary" id="driveConnectBtn" style="font-size:11.5px;padding:6px 12px;">Connect</button>
+        <button class="btn-secondary" id="driveBrowseBtn" style="font-size:11.5px;padding:6px 12px;display:none;">📁 Browse &amp; import a file</button>
+      </div>
+    </div>
+    <div id="driveStatusLine" style="font-size:13px;color:var(--ink-soft);">Not connected yet — connect once, then import a Doc/Sheet/Drive file into any item, any time.</div>
+  </div>
+
+  <div class="field" id="countdownWidget" style="background:var(--paper-card);border:1px solid var(--line);border-radius:3px;padding:14px 16px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <label style="margin:0;">⏳ Exam Countdowns</label>
+      <button class="btn-secondary" id="addCountdownBtn" style="font-size:11.5px;padding:6px 12px;">+ Add countdown</button>
+    </div>
+    <div id="countdownList" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+  </div>
+
   <div style="display:flex;gap:6px;margin-bottom:14px;">
     <button class="btn-secondary section-tab active" data-section="vault" style="font-weight:600;">🗂 Vault</button>
     <button class="btn-secondary section-tab" data-section="exam" style="font-weight:600;">📚 Exam</button>
@@ -478,46 +523,69 @@
   </div>
 
   <div class="bar">
-    <div class="search-slot" style="position:relative;">
-      <input type="text" id="searchInput" placeholder="Search title, tags, notes…" autocomplete="off">
-      <div id="searchSuggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper-card);border:1px solid var(--ink);border-top:none;z-index:20;max-height:220px;overflow-y:auto;"></div>
+    <div class="toolbar-group toolbar-group--search">
+      <div class="search-slot" style="position:relative;">
+        <input type="text" id="searchInput" placeholder="Search title, tags, notes…" autocomplete="off">
+        <div id="searchSuggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper-card);border:1px solid var(--ink);border-top:none;z-index:20;max-height:220px;overflow-y:auto;"></div>
+      </div>
+      <button class="btn-secondary" id="aiSearchToggle" title="Ask in plain English instead of keyword matching">✨ AI Search</button>
     </div>
-    <select class="type-filter" id="sortSelect">
-      <option value="newest">Newest first</option>
-      <option value="due">Upcoming deadline</option>
-      <option value="pinned">Pinned first</option>
-    </select>
-    <select class="type-filter" id="typeFilter">
-      <option value="all">All types</option>
-      <option value="link">Link</option>
-      <option value="tool">Tool</option>
-      <option value="note">Note</option>
-      <option value="pdf">PDF</option>
-      <option value="word">Word</option>
-      <option value="excel">Excel</option>
-      <option value="powerpoint">PowerPoint</option>
-      <option value="html">HTML</option>
-      <option value="markdown">Markdown</option>
-      <option value="txt">TXT</option>
-      <option value="csv">CSV</option>
-      <option value="rtf">RTF</option>
-      <option value="opendocument">ODT/ODS/ODP</option>
-      <option value="video">Video</option>
-      <option value="photo">Photo</option>
-      <option value="archive">Archive/Zip</option>
-      <option value="other">Other</option>
-    </select>
-    <button class="btn-secondary" id="viewToggleBtn" title="Switch grid/list view">☰ List</button>
-    <button class="btn-secondary" id="favToggleBtn" title="Show only favourites">☆ Favourites</button>
-    <button class="btn-secondary" id="recentBtn" title="Recently opened items">🕒 Recent</button>
-    <button class="btn-secondary" id="binBtn" title="Recycle Bin">🗑 Bin</button>
-    <button class="btn-secondary" id="selectModeBtn" title="Select multiple to delete">☑ Select</button>
-    <button class="btn-secondary" id="bulkDeleteBtn" style="display:none;color:var(--stamp-red);">Delete selected (0)</button>
-    <span class="card-date" id="storageUsage" style="margin-left:6px;"></span>
-    <button class="add-btn" id="openAdd">+ Add item</button>
-    <button class="btn-secondary" id="exportBtn" title="Download a backup JSON file">⬇ Export</button>
-    <button class="btn-secondary" id="importBtn" title="Restore from a backup JSON file">⬆ Import</button>
-    <input type="file" id="importFile" accept="application/json" style="display:none;">
+
+    <div class="toolbar-group">
+      <select class="type-filter" id="sortSelect">
+        <option value="newest">Newest first</option>
+        <option value="due">Upcoming deadline</option>
+        <option value="pinned">Pinned first</option>
+      </select>
+      <select class="type-filter" id="typeFilter">
+        <option value="all">All types</option>
+        <option value="link">Link</option>
+        <option value="tool">Tool</option>
+        <option value="note">Note</option>
+        <option value="pdf">PDF</option>
+        <option value="word">Word</option>
+        <option value="excel">Excel</option>
+        <option value="powerpoint">PowerPoint</option>
+        <option value="html">HTML</option>
+        <option value="markdown">Markdown</option>
+        <option value="txt">TXT</option>
+        <option value="csv">CSV</option>
+        <option value="rtf">RTF</option>
+        <option value="opendocument">ODT/ODS/ODP</option>
+        <option value="video">Video</option>
+        <option value="photo">Photo</option>
+        <option value="archive">Archive/Zip</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="toolbar-group">
+      <button class="btn-secondary" id="viewToggleBtn" title="Switch grid/list view">☰ List</button>
+      <button class="btn-secondary" id="favToggleBtn" title="Show only favourites">☆ Favourites</button>
+      <button class="btn-secondary" id="recentBtn" title="Recently opened items">🕒 Recent</button>
+      <button class="btn-secondary" id="binBtn" title="Recycle Bin">🗑 Bin</button>
+      <button class="btn-secondary" id="aiAssistantBtn" title="Chat with Bhutku">👧 Bhutku</button>
+    </div>
+
+    <div class="toolbar-group">
+      <button class="btn-secondary" id="selectModeBtn" title="Select multiple to delete">☑ Select</button>
+      <button class="btn-secondary" id="selectAllBtn" style="display:none;">Select all</button>
+      <button class="btn-secondary" id="bulkDeleteBtn" style="display:none;color:var(--stamp-red);">Delete selected (0)</button>
+      <button class="btn-secondary" id="bulkExportBtn" style="display:none;">⬇ Export selected</button>
+    </div>
+
+    <div class="toolbar-group toolbar-group--primary">
+      <button class="add-btn" id="openAdd">+ Add item</button>
+      <button class="btn-secondary" id="bulkAddBtn" title="Upload several files at once">📦 Bulk Add</button>
+      <input type="file" id="bulkAddFile" multiple style="display:none;">
+    </div>
+
+    <div class="toolbar-group">
+      <button class="btn-secondary" id="exportBtn" title="Download an encrypted backup file">🔒 Export</button>
+      <button class="btn-secondary" id="importBtn" title="Restore from an encrypted backup file">⬆ Import</button>
+      <input type="file" id="importFile" accept=".vaultbak,application/json" style="display:none;">
+      <span class="card-date" id="storageUsage"></span>
+    </div>
     <span class="card-date" id="userBadge" style="display:none;margin-left:auto;"></span>
     <button class="btn-secondary" id="logoutBtn" style="display:none;">Log out</button>
   </div>
@@ -537,6 +605,48 @@
     <div>Add your first link, tool, or note above.</div>
   </div>
 </main>
+
+<div class="overlay" id="aiOverlay" style="display:none;">
+  <div class="modal" style="max-width:600px;width:94vw;height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);">
+      <strong style="flex:1;">👧 Bhutku — ask about your Vault</strong>
+      <button class="btn-secondary" id="aiClearBtn" style="font-size:11px;padding:4px 10px;">Clear chat</button>
+      <button class="btn-secondary" id="aiCloseBtn" style="font-size:11px;padding:4px 10px;">✕ Close</button>
+    </div>
+    <div id="aiChatLog" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;"></div>
+    <div id="aiStatus" style="padding:0 16px;font-size:11.5px;color:var(--ink-soft);display:none;">Thinking…</div>
+    <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);">
+      <input type="text" id="aiChatInput" placeholder="e.g. Summarise my Accounting notes, or what's due this week?" style="flex:1;padding:9px 12px;border:1px solid var(--ink);border-radius:2px;background:var(--paper-card);color:var(--ink);font-family:inherit;">
+      <button class="btn-primary" id="aiSendBtn">Send</button>
+    </div>
+    <div class="hint" style="padding:0 16px 10px;margin:0;">Answers are generated by AI from your saved titles, tags, notes and remarks — always double-check anything important.</div>
+  </div>
+</div>
+
+<div class="overlay" id="notesOverlay" style="display:none;">
+  <div class="modal" style="max-width:640px;width:94vw;max-height:85vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);">
+      <strong style="flex:1;" id="notesOverlayTitle">📝 AI Notes</strong>
+      <button class="btn-secondary" id="notesCloseBtn" style="font-size:11px;padding:4px 10px;">✕ Close</button>
+    </div>
+    <div id="notesBody" style="flex:1;overflow-y:auto;padding:16px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;">Generating…</div>
+    <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);">
+      <button class="btn-primary" id="notesSaveBtn">💾 Save as new note in Vault</button>
+    </div>
+    <div class="hint" style="padding:0 16px 10px;margin:0;">Generated by AI by reading the file's content — accuracy isn't guaranteed, please review before relying on these for exams.</div>
+  </div>
+</div>
+
+<div class="overlay" id="cardOverlay" style="display:none;">
+  <div class="modal" style="max-width:460px;width:92vw;padding:20px;text-align:center;">
+    <canvas id="countdownCanvas" width="800" height="450" style="width:100%;height:auto;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.25);"></canvas>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
+      <button class="btn-primary" id="cardDownloadBtn">⬇ Download image</button>
+      <button class="btn-secondary" id="cardShareBtn">📤 Share</button>
+      <button class="btn-secondary" id="cardCloseBtn">✕ Close</button>
+    </div>
+  </div>
+</div>
 
 <div class="setup-overlay" id="setupOverlay" style="display:none;">
   <div class="setup-box">
@@ -656,6 +766,7 @@
     <div class="field">
       <label>Tags (comma separated)</label>
       <input type="text" id="fTags" placeholder="work, reference, watch-later">
+      <button type="button" class="btn-secondary" id="aiAutoTagBtn" style="margin-top:8px;font-size:12px;padding:6px 12px;">✨ Suggest subject &amp; tags with AI</button>
     </div>
 
     <div class="modal-actions">
@@ -967,9 +1078,10 @@ function fmtDate(ts){
 }
 
 async function loadItems(){
-  if(storageMode === 'local'){ loadItemsLocal(); loadFolderLocks(); return; }
+  if(storageMode === 'local'){ loadItemsLocal(); loadFolderLocks(); loadCountdowns(); return; }
   if(!sb || !currentUser) return;
   loadFolderLocks();
+  loadCountdowns();
   statusMsg.style.display = 'block';
   statusMsg.textContent = 'Loading…';
   try{
@@ -1075,7 +1187,328 @@ async function hashFile(file){
 
 const BUCKET = 'vault-files';
 
-// --- Lightweight toast notifications ---
+// ============================================================
+// AI features (Google Gemini — free tier) — Chat with Vault, AI Search,
+// Auto-tagging, and per-item Summarize. Calls go straight from the
+// browser to Google's Generative Language API using a free API key
+// from Google AI Studio (no credit card needed for the free tier).
+//
+// NOTE ON SECURITY: the API key is stored in this browser's localStorage
+// and sent with every request. Anyone with access to this browser/device
+// (or its dev tools) could read the key. Free-tier keys have no billing
+// attached, so the worst case is someone else using up your free daily
+// quota — not a real money risk.
+// ============================================================
+const GEMINI_MODEL = 'gemini-2.0-flash';
+
+function getGeminiApiKey(){
+  return localStorage.getItem('vault_gemini_api_key') || '';
+}
+function ensureGeminiApiKey(){
+  let key = getGeminiApiKey();
+  if(key) return key;
+  key = prompt('Paste your free Google Gemini API key (get one at aistudio.google.com/apikey — no credit card needed). It is stored only in this browser.');
+  if(!key) return '';
+  key = key.trim();
+  localStorage.setItem('vault_gemini_api_key', key);
+  return key;
+}
+
+async function callAI(userMessage, systemPrompt, opts){
+  opts = opts || {};
+  const apiKey = ensureGeminiApiKey();
+  if(!apiKey) throw new Error('No API key provided');
+
+  // Gemini has no separate "system" role in the simple generateContent call,
+  // so we prepend the system prompt to the first user turn instead.
+  const contents = [];
+  if(opts.history){
+    for(const turn of opts.history){
+      contents.push({ role: turn.role === 'assistant' ? 'model' : 'user', parts: [{ text: turn.content }] });
+    }
+  }
+  const firstTurn = contents.length === 0 && systemPrompt ? `${systemPrompt}\n\n${userMessage}` : userMessage;
+  const firstParts = [{ text: firstTurn }];
+  if(opts.inlineFile){
+    firstParts.push({ inline_data: { mime_type: opts.inlineFile.mimeType, data: opts.inlineFile.data } });
+  }
+  contents.push({ role: 'user', parts: firstParts });
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents,
+      systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+      generationConfig: { maxOutputTokens: opts.maxTokens || 1024 }
+    })
+  });
+  if(res.status === 400 || res.status === 403){
+    const errText = await res.text().catch(()=> '');
+    if(errText.toLowerCase().includes('api key')){
+      localStorage.removeItem('vault_gemini_api_key');
+      throw new Error('That API key was rejected. Click again to re-enter it.');
+    }
+    throw new Error('API error ' + res.status + ': ' + errText.slice(0,200));
+  }
+  if(res.status === 429){
+    throw new Error('Free-tier rate limit hit — wait a minute and try again.');
+  }
+  if(!res.ok){
+    const errText = await res.text().catch(()=> '');
+    throw new Error('API error ' + res.status + (errText ? ': ' + errText.slice(0,200) : ''));
+  }
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.map(p=>p.text).join('') || '';
+  return text;
+}
+
+// Compact, token-friendly snapshot of the vault for AI context.
+function buildVaultContext(){
+  const relevant = items.filter(it=>!it.deletedAt && (it.section||'vault')===currentSection);
+  return relevant.slice(0, 300).map(it=>({
+    id: it.id,
+    type: it.type,
+    title: it.title,
+    subject: it.subject || '',
+    group: it.groupName || '',
+    tags: it.tags || [],
+    due: it.dueDate || '',
+    notes: (it.notes || '').slice(0, 300),
+    remark: it.remark || ''
+  }));
+}
+
+// --- Chat with Vault ---
+let aiChatHistory = [];
+const aiOverlay = document.getElementById('aiOverlay');
+const aiChatLog = document.getElementById('aiChatLog');
+const aiStatus = document.getElementById('aiStatus');
+
+function aiAddBubble(role, text){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = role === 'user'
+    ? 'align-self:flex-end;display:flex;'
+    : 'align-self:flex-start;display:flex;align-items:flex-end;gap:6px;';
+
+  if(role !== 'user'){
+    const avatar = document.createElement('div');
+    avatar.textContent = '👧';
+    avatar.style.cssText = 'font-size:18px;line-height:1;flex-shrink:0;';
+    wrap.appendChild(avatar);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.style.cssText = role === 'user'
+    ? 'background:var(--ink);color:var(--paper-card);padding:9px 13px;border-radius:10px 10px 2px 10px;max-width:100%;font-size:13.5px;white-space:pre-wrap;'
+    : 'background:var(--paper-card2, rgba(0,0,0,0.05));border:1px solid var(--line);padding:9px 13px;border-radius:10px 10px 10px 2px;max-width:100%;font-size:13.5px;white-space:pre-wrap;';
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  wrap.style.maxWidth = '85%';
+
+  aiChatLog.appendChild(wrap);
+  aiChatLog.scrollTop = aiChatLog.scrollHeight;
+  return wrap;
+}
+
+document.getElementById('aiAssistantBtn').addEventListener('click', ()=>{
+  aiOverlay.style.display = 'flex';
+  document.getElementById('aiChatInput').focus();
+});
+document.getElementById('aiCloseBtn').addEventListener('click', ()=>{
+  aiOverlay.style.display = 'none';
+});
+document.getElementById('aiClearBtn').addEventListener('click', ()=>{
+  aiChatHistory = [];
+  aiChatLog.innerHTML = '';
+});
+
+async function sendAiChatMessage(){
+  const input = document.getElementById('aiChatInput');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+  aiAddBubble('user', q);
+  aiStatus.style.display = 'block';
+  aiStatus.textContent = 'Thinking…';
+
+  const system = `You are "Bhutku", a friendly helper girl who lives inside a personal student "vault" app (a filing cabinet of links, files, and notes for college coursework). Answer the user's question using ONLY the vault items JSON provided below — don't invent items that aren't listed. If nothing relevant is found, say so plainly. Keep answers concise and skimmable (use short bullet points where useful). When referring to an item, mention its title so the user can find it. Stay warm and to the point — no long introductions.
+
+Vault items (JSON):
+${JSON.stringify(buildVaultContext())}`;
+
+  try{
+    const answer = await callAI(q, system, { history: aiChatHistory, maxTokens: 700 });
+    aiChatHistory.push({ role: 'user', content: q }, { role: 'assistant', content: answer });
+    if(aiChatHistory.length > 20) aiChatHistory = aiChatHistory.slice(-20);
+    aiAddBubble('assistant', answer || '(no answer)');
+  }catch(e){
+    aiAddBubble('assistant', '⚠ ' + (e.message || 'Something went wrong.'));
+  }finally{
+    aiStatus.style.display = 'none';
+  }
+}
+document.getElementById('aiSendBtn').addEventListener('click', sendAiChatMessage);
+document.getElementById('aiChatInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') sendAiChatMessage();
+});
+
+// --- AI Search (natural-language search instead of plain substring match) ---
+let aiSearchActive = false;
+let aiSearchResultIds = null; // null = inactive, Set = active filter
+document.getElementById('aiSearchToggle').addEventListener('click', async ()=>{
+  const q = searchInput.value.trim();
+  if(!aiSearchActive){
+    if(!q){ toast('Type a question in the search box first'); return; }
+    aiSearchActive = true;
+    document.getElementById('aiSearchToggle').classList.add('active');
+    document.getElementById('aiSearchToggle').textContent = '⏳ Searching…';
+    try{
+      const system = `You answer with ONLY a JSON array of matching item "id" strings — nothing else, no prose, no markdown fences. Given the user's natural-language search query and this list of vault items, return the ids of items that best match the query's meaning (not just exact keywords). If nothing matches, return [].
+
+Vault items (JSON):
+${JSON.stringify(buildVaultContext())}`;
+      const raw = await callAI(q, system, { maxTokens: 500 });
+      let ids = [];
+      try{ ids = JSON.parse(raw.trim().replace(/^```json\s*|```$/g, '')); }catch(e){ ids = []; }
+      aiSearchResultIds = new Set(Array.isArray(ids) ? ids : []);
+      toast(`AI found ${aiSearchResultIds.size} matching item(s)`);
+    }catch(e){
+      toast('AI search failed: ' + (e.message || 'unknown error'));
+      aiSearchActive = false;
+      aiSearchResultIds = null;
+    }
+    document.getElementById('aiSearchToggle').textContent = '✨ AI Search';
+    render();
+  } else {
+    aiSearchActive = false;
+    aiSearchResultIds = null;
+    document.getElementById('aiSearchToggle').classList.remove('active');
+    render();
+  }
+});
+
+// --- Auto-tagging (suggest Subject + Tags from title/notes/type) ---
+document.getElementById('aiAutoTagBtn').addEventListener('click', async ()=>{
+  const title = document.getElementById('fTitle').value.trim();
+  const notes = document.getElementById('fNotes').value.trim();
+  if(!title && !notes){ toast('Add a title or notes first'); return; }
+  const btn = document.getElementById('aiAutoTagBtn');
+  btn.disabled = true;
+  btn.textContent = 'Thinking…';
+  try{
+    const system = `You suggest a short academic "subject" label and 2-5 lowercase tags for a study-vault item. Reply with ONLY compact JSON like {"subject":"Accounting","tags":["exam","chapter2"]} — no prose, no markdown fences.`;
+    const userMsg = `Type: ${currentType}\nTitle: ${title}\nNotes: ${notes.slice(0,400)}`;
+    const raw = await callAI(userMsg, system, { maxTokens: 200 });
+    const parsed = JSON.parse(raw.trim().replace(/^```json\s*|```$/g, ''));
+    if(parsed.subject) document.getElementById('fSubject').value = parsed.subject;
+    if(Array.isArray(parsed.tags) && parsed.tags.length){
+      document.getElementById('fTags').value = parsed.tags.join(', ');
+    }
+    toast('AI suggestions applied — review before saving');
+  }catch(e){
+    toast('AI suggestion failed: ' + (e.message || 'unknown error'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '✨ Suggest subject & tags with AI';
+  }
+});
+
+// --- Summarize an item's notes (used from the card action button) ---
+async function summarizeItem(id){
+  const it = items.find(x=>x.id === id);
+  if(!it) return;
+  const text = [it.notes, it.remark].filter(Boolean).join('\n');
+  if(!text.trim()){ toast('This item has no notes/remark to summarise'); return; }
+  toast('Summarising…');
+  try{
+    const summary = await callAI(
+      `Summarise this in 2-3 short sentences for quick revision:\n\n${text.slice(0, 3000)}`,
+      'You write extremely concise study summaries. No preamble, just the summary.',
+      { maxTokens: 220 }
+    );
+    alert('Summary of "' + it.title + '":\n\n' + summary);
+  }catch(e){
+    toast('Summarise failed: ' + (e.message || 'unknown error'));
+  }
+}
+
+// --- AI Notes generation from an actual uploaded file (PDF sent natively;
+// text-based files sent as plain text). This is the "RAG-lite" flow: read
+// the real file content, then ask the model to produce structured notes. ---
+const MIME_BY_TYPE = {
+  pdf: 'application/pdf', txt: 'text/plain', markdown: 'text/markdown',
+  csv: 'text/csv', html: 'text/html'
+};
+
+function arrayBufferToBase64(buf){
+  const bytes = new Uint8Array(buf);
+  const chunkSize = 8192;
+  let binary = '';
+  for(let i = 0; i < bytes.length; i += chunkSize){
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function generateNotesForItem(id){
+  const it = items.find(x=>x.id === id);
+  if(!it || !it.url) return;
+
+  const overlay = document.getElementById('notesOverlay');
+  const body = document.getElementById('notesBody');
+  document.getElementById('notesOverlayTitle').textContent = '📝 AI Notes — ' + it.title;
+  document.getElementById('notesSaveBtn').style.display = 'none';
+  body.textContent = 'Reading the file…';
+  overlay.style.display = 'flex';
+
+  try{
+    const url = await resolveOpenUrl(it.url);
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Could not fetch the file (HTTP ' + res.status + ')');
+
+    const system = 'You write clear, well-structured revision notes from source material — use headings, short bullet points, and bold key terms where useful. Base the notes ONLY on the given content; do not invent facts. If the content is unreadable or empty, say so plainly instead of making things up.';
+    const instruction = `Read the attached ${it.type.toUpperCase()} file and produce concise, well-organised revision notes covering its key points.`;
+
+    let notes;
+    body.textContent = 'Generating notes…';
+    if(it.type === 'pdf'){
+      const buf = await res.arrayBuffer();
+      const base64 = arrayBufferToBase64(buf);
+      notes = await callAI(instruction, system, {
+        maxTokens: 1500,
+        inlineFile: { mimeType: 'application/pdf', data: base64 }
+      });
+    } else {
+      const text = await res.text();
+      if(!text.trim()) throw new Error('The file appears to be empty.');
+      notes = await callAI(`${instruction}\n\n--- FILE CONTENT ---\n${text.slice(0, 15000)}`, system, { maxTokens: 1500 });
+    }
+
+    body.textContent = notes || '(No notes were generated.)';
+    document.getElementById('notesSaveBtn').style.display = 'inline-block';
+    document.getElementById('notesSaveBtn').onclick = async ()=>{
+      const draft = {
+        type: 'markdown', title: '📝 Notes — ' + it.title, url: '', notes,
+        tags: ['ai-notes'], subject: it.subject || '', subjectColor: it.subjectColor || '#2f5a6b',
+        dueDate: '', pinned: false, section: it.section || currentSection,
+        groupName: it.groupName || '', remark: 'AI-generated from ' + it.title,
+        isFavorite: false, fileHash: null
+      };
+      const row = await insertItem(draft);
+      if(row){
+        loadItems();
+        toast('Saved as a new note ✓');
+        overlay.style.display = 'none';
+      }
+    };
+  }catch(e){
+    body.textContent = '⚠ ' + (e.message || 'Something went wrong while generating notes.');
+  }
+}
+document.getElementById('notesCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('notesOverlay').style.display = 'none';
+});
 let toastContainer = null;
 function toast(msg){
   if(!toastContainer){
@@ -1090,6 +1523,183 @@ function toast(msg){
   requestAnimationFrame(()=>{ el.style.opacity = '1'; });
   setTimeout(()=>{ el.style.opacity = '0'; setTimeout(()=> el.remove(), 250); }, 2200);
 }
+
+// --- Exam Countdown widget ---
+// Stored in a small Supabase table (vault_countdowns) so it follows you
+// across devices; falls back to localStorage in offline mode.
+let countdowns = [];
+
+async function loadCountdowns(){
+  if(storageMode === 'local'){
+    try{ countdowns = JSON.parse(localStorage.getItem('vault_countdowns') || '[]'); }
+    catch(e){ countdowns = []; }
+    renderCountdownWidget();
+    return;
+  }
+  if(!sb) return;
+  const { data, error } = await sb.from('vault_countdowns').select('id, title, target_date, section').eq('section', currentSection);
+  if(!error && data) countdowns = data.map(r=>({ id: r.id, title: r.title, targetDate: r.target_date, section: r.section }));
+  renderCountdownWidget();
+}
+
+async function addCountdownEntry(title, targetDate){
+  if(storageMode === 'local'){
+    const row = { id: localUid(), title, targetDate, section: currentSection };
+    countdowns.push(row);
+    localStorage.setItem('vault_countdowns', JSON.stringify(countdowns));
+    renderCountdownWidget();
+    return;
+  }
+  const { data, error } = await sb.from('vault_countdowns').insert([{ title, target_date: targetDate, section: currentSection }]).select();
+  if(!error && data){
+    countdowns.push({ id: data[0].id, title, targetDate, section: currentSection });
+    renderCountdownWidget();
+  } else if(error){
+    alert('Could not save countdown: ' + error.message);
+  }
+}
+
+async function deleteCountdownEntry(id){
+  countdowns = countdowns.filter(c=>c.id !== id);
+  if(storageMode === 'local'){
+    localStorage.setItem('vault_countdowns', JSON.stringify(countdowns));
+  } else if(sb){
+    await sb.from('vault_countdowns').delete().eq('id', id);
+  }
+  renderCountdownWidget();
+}
+
+function daysUntil(dateStr){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr + 'T00:00:00');
+  return Math.round((target - today) / 86400000);
+}
+
+function renderCountdownWidget(){
+  const list = document.getElementById('countdownList');
+  const visible = countdowns.filter(c=>c.section === currentSection).sort((a,b)=> daysUntil(a.targetDate) - daysUntil(b.targetDate));
+  if(!visible.length){
+    list.innerHTML = `<div style="font-size:13px;color:var(--ink-soft);">No countdowns yet — add your next exam date.</div>`;
+    return;
+  }
+  list.innerHTML = visible.map(c=>{
+    const d = daysUntil(c.targetDate);
+    const label = d < 0 ? 'Past' : d === 0 ? 'Today!' : d + (d===1 ? ' day left' : ' days left');
+    const urgent = d >= 0 && d <= 3;
+    return `<div class="btn-secondary countdown-chip" data-id="${c.id}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;cursor:default;${urgent ? 'border-color:var(--stamp-red);color:var(--stamp-red);' : ''}">
+      <div style="display:flex;align-items:center;gap:8px;width:100%;">
+        <strong style="font-size:13px;">${escapeHtml(c.title)}</strong>
+        <button data-action="delcountdown" data-id="${c.id}" title="Remove" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;opacity:0.6;font-size:12px;">✕</button>
+      </div>
+      <span style="font-size:11.5px;">${label} · ${c.targetDate}</span>
+      <button data-action="gencard" data-id="${c.id}" style="font-size:11px;padding:3px 8px;margin-top:4px;border:1px solid currentColor;background:none;color:inherit;border-radius:3px;cursor:pointer;">🖼 Generate card</button>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('countdownList').addEventListener('click', (e)=>{
+  const del = e.target.closest('[data-action="delcountdown"]');
+  if(del){
+    if(confirm('Remove this countdown?')) deleteCountdownEntry(del.dataset.id);
+    return;
+  }
+  const gen = e.target.closest('[data-action="gencard"]');
+  if(gen){
+    const c = countdowns.find(x=>x.id === gen.dataset.id);
+    if(c) generateCountdownCard(c);
+  }
+});
+
+document.getElementById('addCountdownBtn').addEventListener('click', async ()=>{
+  const title = prompt('Exam / event name (e.g. "Cost Accounting Final"):');
+  if(!title) return;
+  const dateStr = prompt('Date (YYYY-MM-DD), e.g. 2026-08-15:');
+  if(!dateStr) return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())){
+    alert('Please use the format YYYY-MM-DD, e.g. 2026-08-15');
+    return;
+  }
+  addCountdownEntry(title.trim(), dateStr.trim());
+});
+
+// --- Countdown card image generator (canvas) ---
+function generateCountdownCard(c){
+  const canvas = document.getElementById('countdownCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const d = daysUntil(c.targetDate);
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#1c2430');
+  grad.addColorStop(1, '#2f5a6b');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Decorative border
+  ctx.strokeStyle = 'rgba(233,228,214,0.35)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(20, 20, W-40, H-40);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e9e4d6';
+
+  ctx.font = '600 26px ui-monospace, monospace';
+  wrapCanvasText(ctx, c.title, W/2, 90, W-120, 32);
+
+  ctx.font = '800 150px ui-monospace, monospace';
+  const bigText = d < 0 ? 'Done' : d === 0 ? 'Today' : String(d);
+  ctx.fillText(bigText, W/2, 280);
+
+  ctx.font = '600 28px ui-monospace, monospace';
+  ctx.fillText(d < 0 ? '' : (d === 0 ? 'is the day!' : (d === 1 ? 'day left' : 'days left')), W/2, 330);
+
+  ctx.font = '400 16px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(233,228,214,0.7)';
+  ctx.fillText(c.targetDate + '  ·  The Vault', W/2, H - 35);
+
+  document.getElementById('cardOverlay').style.display = 'flex';
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(' ');
+  let line = '', lines = [];
+  for(const w of words){
+    const test = line ? line + ' ' + w : w;
+    if(ctx.measureText(test).width > maxWidth && line){ lines.push(line); line = w; }
+    else line = test;
+  }
+  lines.push(line);
+  lines.forEach((l, i)=> ctx.fillText(l, x, y + i*lineHeight));
+}
+
+document.getElementById('cardCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('cardOverlay').style.display = 'none';
+});
+document.getElementById('cardDownloadBtn').addEventListener('click', ()=>{
+  const canvas = document.getElementById('countdownCanvas');
+  const a = document.createElement('a');
+  a.download = 'exam-countdown.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+});
+document.getElementById('cardShareBtn').addEventListener('click', async ()=>{
+  const canvas = document.getElementById('countdownCanvas');
+  canvas.toBlob(async (blob)=>{
+    if(!blob) return;
+    const file = new File([blob], 'exam-countdown.png', { type: 'image/png' });
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
+      try{ await navigator.share({ files: [file], title: 'Exam countdown' }); }
+      catch(e){ /* cancelled */ }
+    } else {
+      const a = document.createElement('a');
+      a.download = 'exam-countdown.png';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      toast('Sharing not supported here — image downloaded instead');
+    }
+  }, 'image/png');
+});
 
 // --- Hidden / private folders — PIN-protected group paths ---
 // Stored in a small Supabase table (vault_folder_locks: folder_path, pin_hash)
@@ -1262,6 +1872,8 @@ let currentGroup = 'all';        // exact matched leaf group (legacy, kept for c
 let currentGroupPath = [];       // nested folder path, e.g. ['Semester1','Accounting']
 let currentView = 'items';       // 'items' | 'bin' | 'recent'
 let favoritesOnly = false;
+let binSelectMode = false;
+let binSelectedIds = new Set();
 let visibleCount = 24;
 let lastFilterSignature = '';
 
@@ -1304,6 +1916,9 @@ function render(){
     }
     if(isFolderHidden(it.groupName) && !unlockedFolders.has(it.groupName)) return false;
     if(tf !== 'all' && it.type !== tf) return false;
+    if(aiSearchActive && aiSearchResultIds){
+      return aiSearchResultIds.has(it.id);
+    }
     if(!q) return true;
     const hay = [it.title, it.notes, (it.tags||[]).join(' '), it.subject||''].join(' ').toLowerCase();
     return hay.includes(q);
@@ -1381,9 +1996,13 @@ function buildCardEl(it, mode){
       <button data-action="restore" data-id="${it.id}">♻ Restore</button>
       <button data-action="permadel" class="del" data-id="${it.id}">Delete forever</button>`;
   } else {
+    const hasSummarizableText = (it.notes || it.remark || '').trim().length > 0;
+    const notesEligible = ['pdf','txt','markdown','csv','html'].includes(it.type) && hasUrl;
     footActions = `
       ${openControl}
       <button data-action="fav" data-id="${it.id}" title="${it.isFavorite ? 'Remove favourite' : 'Add favourite'}">${it.isFavorite ? '⭐' : '☆'}</button>
+      ${hasSummarizableText ? `<button data-action="summarize" data-id="${it.id}" title="AI summary">✨ Summarize</button>` : ''}
+      ${notesEligible ? `<button data-action="gennotes" data-id="${it.id}" title="Generate AI revision notes from this file">📝 AI Notes</button>` : ''}
       <button data-action="share" data-id="${it.id}">Share</button>
       <button data-action="edit" data-id="${it.id}">Edit</button>
       <button data-action="del" class="del" data-id="${it.id}">Delete</button>
@@ -1393,6 +2012,7 @@ function buildCardEl(it, mode){
   card.innerHTML = `
     <div class="card-top">
       ${selectMode && mode==='normal' ? `<input type="checkbox" class="select-check" data-id="${it.id}" ${selectedIds.has(it.id) ? 'checked' : ''}>` : ''}
+      ${binSelectMode && mode==='bin' ? `<input type="checkbox" class="bin-select-check" data-id="${it.id}" ${binSelectedIds.has(it.id) ? 'checked' : ''}>` : ''}
       <span class="stamp ${it.type}">${typeIcon(it.type)} ${it.type}</span>
       ${mode === 'normal' ? `<button class="pin-btn${it.pinned ? ' is-pinned' : ''}" data-action="pin" data-id="${it.id}" title="${it.pinned ? 'Unpin' : 'Pin'}">${it.pinned ? '📌' : '📍'}</button>` : ''}
     </div>
@@ -1421,9 +2041,19 @@ function buildCardEl(it, mode){
 
 // --- Recycle Bin view ---
 function renderBinView(){
-  document.getElementById('groupsRow').innerHTML = `<div class="hint" style="margin:0;">🗑 Items you deleted stay here until you remove them for good. <button class="btn-secondary" id="emptyBinBtn" style="font-size:11px;padding:4px 10px;margin-left:8px;">Empty Bin</button></div>`;
-  const binBtn = document.getElementById('emptyBinBtn');
-  if(binBtn) binBtn.addEventListener('click', async ()=>{
+  const trashedAll = items.filter(it=>it.deletedAt && (it.section||'vault')===currentSection);
+
+  document.getElementById('groupsRow').innerHTML = `
+    <div class="hint" style="margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+      🗑 Items you deleted stay here until you remove them for good.
+      <button class="btn-secondary" id="binSelectModeBtn" style="font-size:11px;padding:4px 10px;">${binSelectMode ? '✕ Cancel' : '☑ Select'}</button>
+      ${binSelectMode ? `<button class="btn-secondary" id="binSelectAllBtn" style="font-size:11px;padding:4px 10px;">Select all</button>` : ''}
+      ${binSelectMode ? `<button class="btn-secondary" id="binRestoreSelectedBtn" style="font-size:11px;padding:4px 10px;">♻ Restore selected (${binSelectedIds.size})</button>` : ''}
+      ${binSelectMode ? `<button class="btn-secondary" id="binDeleteSelectedBtn" style="font-size:11px;padding:4px 10px;color:var(--stamp-red);">Delete selected forever (${binSelectedIds.size})</button>` : ''}
+      <button class="btn-secondary" id="emptyBinBtn" style="font-size:11px;padding:4px 10px;">Empty Bin</button>
+    </div>`;
+
+  document.getElementById('emptyBinBtn').addEventListener('click', async ()=>{
     const trashed = items.filter(it=>it.deletedAt && (it.section||'vault')===currentSection);
     if(!trashed.length) return;
     if(!confirm(`Permanently delete all ${trashed.length} item(s) in the Bin? This cannot be undone.`)) return;
@@ -1431,11 +2061,64 @@ function renderBinView(){
       await permanentlyDeleteItem(it.id);
     }
     items = items.filter(it=>!(it.deletedAt && (it.section||'vault')===currentSection));
+    binSelectedIds.clear();
     render();
   });
 
-  const trashed = items.filter(it=>it.deletedAt && (it.section||'vault')===currentSection)
-                        .sort((a,b)=> b.deletedAt - a.deletedAt);
+  const selectModeBtn = document.getElementById('binSelectModeBtn');
+  selectModeBtn.addEventListener('click', ()=>{
+    binSelectMode = !binSelectMode;
+    binSelectedIds.clear();
+    render();
+  });
+
+  const selectAllBtn = document.getElementById('binSelectAllBtn');
+  if(selectAllBtn){
+    selectAllBtn.addEventListener('click', ()=>{
+      const allIds = trashedAll.map(it=>it.id);
+      const allSelected = allIds.length > 0 && allIds.every(id=>binSelectedIds.has(id));
+      if(allSelected) allIds.forEach(id=>binSelectedIds.delete(id));
+      else allIds.forEach(id=>binSelectedIds.add(id));
+      render();
+    });
+  }
+
+  const restoreBtn = document.getElementById('binRestoreSelectedBtn');
+  if(restoreBtn){
+    restoreBtn.addEventListener('click', async ()=>{
+      if(!binSelectedIds.size) return;
+      for(const id of [...binSelectedIds]){
+        const ok = await restoreItem(id);
+        if(ok){
+          const it = items.find(x=>x.id === id);
+          if(it) it.deletedAt = null;
+        }
+      }
+      binSelectedIds.clear();
+      binSelectMode = false;
+      render();
+    });
+  }
+
+  const deleteBtn = document.getElementById('binDeleteSelectedBtn');
+  if(deleteBtn){
+    deleteBtn.addEventListener('click', async ()=>{
+      if(!binSelectedIds.size) return;
+      if(!confirm(`Permanently delete ${binSelectedIds.size} selected item(s)? This cannot be undone.`)) return;
+      for(const id of [...binSelectedIds]){
+        const ok = await permanentlyDeleteItem(id);
+        if(ok){
+          items = items.filter(x=>x.id !== id);
+          removeFromRecent(id);
+        }
+      }
+      binSelectedIds.clear();
+      binSelectMode = false;
+      render();
+    });
+  }
+
+  const trashed = trashedAll.sort((a,b)=> b.deletedAt - a.deletedAt);
   grid.innerHTML = '';
   emptyState.style.display = trashed.length ? 'none' : 'block';
   if(!trashed.length){
@@ -1553,10 +2236,18 @@ async function openFileLink(rawUrl){
 
 grid.addEventListener('change', (e)=>{
   const cb = e.target.closest('.select-check');
-  if(!cb) return;
-  if(cb.checked) selectedIds.add(cb.dataset.id);
-  else selectedIds.delete(cb.dataset.id);
-  document.getElementById('bulkDeleteBtn').textContent = `Delete selected (${selectedIds.size})`;
+  if(cb){
+    if(cb.checked) selectedIds.add(cb.dataset.id);
+    else selectedIds.delete(cb.dataset.id);
+    document.getElementById('bulkDeleteBtn').textContent = `Delete selected (${selectedIds.size})`;
+    return;
+  }
+  const binCb = e.target.closest('.bin-select-check');
+  if(binCb){
+    if(binCb.checked) binSelectedIds.add(binCb.dataset.id);
+    else binSelectedIds.delete(binCb.dataset.id);
+    render();
+  }
 });
 
 grid.addEventListener('focusout', async (e)=>{
@@ -1655,6 +2346,14 @@ grid.addEventListener('click', (e)=>{
     render();
     return;
   }
+  if(btn.dataset.action === 'summarize'){
+    summarizeItem(id);
+    return;
+  }
+  if(btn.dataset.action === 'gennotes'){
+    generateNotesForItem(id);
+    return;
+  }
   if(btn.dataset.action === 'share'){
     const it = items.find(x=>x.id === id);
     if(it){
@@ -1715,12 +2414,16 @@ document.getElementById('binBtn').addEventListener('click', ()=>{
   currentView = currentView === 'bin' ? 'items' : 'bin';
   document.getElementById('binBtn').classList.toggle('active', currentView === 'bin');
   document.getElementById('recentBtn').classList.remove('active');
+  binSelectMode = false;
+  binSelectedIds.clear();
   render();
 });
 document.getElementById('recentBtn').addEventListener('click', ()=>{
   currentView = currentView === 'recent' ? 'items' : 'recent';
   document.getElementById('recentBtn').classList.toggle('active', currentView === 'recent');
   document.getElementById('binBtn').classList.remove('active');
+  binSelectMode = false;
+  binSelectedIds.clear();
   render();
 });
 
@@ -1978,22 +2681,140 @@ document.addEventListener('keydown', (e)=>{
 });
 
 // --- Export / Import (local backup, independent of Claude's storage) ---
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    itemCount: items.length,
-    items
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+// --- End-to-end encrypted backup ---
+// Encryption/decryption happens entirely in your browser using the Web
+// Crypto API (AES-GCM, key derived from your password via PBKDF2). Your
+// password is never sent anywhere or stored — if you forget it, the
+// backup file cannot be recovered. That's the trade-off of true E2E encryption.
+async function deriveKey(password, salt){
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptBackup(dataObj, password){
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const plaintext = enc.encode(JSON.stringify(dataObj));
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+  // File layout: [16 bytes salt][12 bytes iv][ciphertext]
+  const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
+  combined.set(salt, 0);
+  combined.set(iv, salt.length);
+  combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
+  return combined;
+}
+
+async function decryptBackup(bytes, password){
+  const salt = bytes.slice(0, 16);
+  const iv = bytes.slice(16, 28);
+  const ciphertext = bytes.slice(28);
+  const key = await deriveKey(password, salt);
+  const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return JSON.parse(new TextDecoder().decode(plainBuf));
+}
+
+async function downloadEncryptedBackup(itemsToExport, filenamePrefix){
+  const password = prompt('Set a password to encrypt this backup.\nYou will need this exact password to restore it later — it is NOT saved anywhere, so please remember it or write it down.');
+  if(!password) return;
+  const confirmPw = prompt('Re-enter the password to confirm:');
+  if(confirmPw !== password){
+    alert('Passwords did not match — backup cancelled.');
+    return;
+  }
+  const payload = { exportedAt: new Date().toISOString(), itemCount: itemsToExport.length, items: itemsToExport };
+  const encryptedBytes = await encryptBackup(payload, password);
+  const blob = new Blob([encryptedBytes], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0,10);
   a.href = url;
-  a.download = `vault-backup-${stamp}.json`;
+  a.download = `${filenamePrefix}-${stamp}.vaultbak`;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+// --- Bulk file upload: multiple files at once, title auto-filled from
+// filename, type auto-detected from extension. No AI content analysis is
+// done here (that would need exposing an API key in this public page,
+// which isn't safe) — just fast, reliable automation from filename/extension.
+function detectTypeFromFilename(name){
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = {
+    jpg:'photo', jpeg:'photo', png:'photo', gif:'photo', webp:'photo',
+    pdf:'pdf',
+    doc:'word', docx:'word',
+    xls:'excel', xlsx:'excel',
+    ppt:'powerpoint', pptx:'powerpoint',
+    html:'html', htm:'html',
+    md:'markdown',
+    txt:'txt',
+    csv:'csv',
+    rtf:'rtf',
+    odt:'opendocument', ods:'opendocument', odp:'opendocument',
+    zip:'archive', rar:'archive', '7z':'archive', tar:'archive', gz:'archive'
+  };
+  return map[ext] || 'other';
+}
+
+function titleFromFilename(name){
+  return name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').trim() || name;
+}
+
+document.getElementById('bulkAddBtn').addEventListener('click', ()=>{
+  document.getElementById('bulkAddFile').value = '';
+  document.getElementById('bulkAddFile').click();
+});
+
+document.getElementById('bulkAddFile').addEventListener('change', async (e)=>{
+  const files = [...e.target.files];
+  if(!files.length) return;
+
+  const sharedGroup = (prompt(`Uploading ${files.length} file(s).\n\nOptional: type a Group/Playlist name to tag all of them (leave blank for none):`) || '').trim();
+
+  let done = 0, failed = 0;
+  for(const file of files){
+    const kind = detectTypeFromFilename(file.name);
+    statusMsg.style.display = 'block';
+    statusMsg.textContent = `Uploading ${done + failed + 1}/${files.length}: ${file.name}`;
+    try{
+      const url = await uploadToStorage(file, kind);
+      await insertItem({
+        type: kind,
+        title: titleFromFilename(file.name),
+        url, notes: '', tags: [],
+        section: currentSection,
+        groupName: sharedGroup
+      });
+      done++;
+    }catch(err){
+      failed++;
+    }
+  }
+  await loadItems();
+  statusMsg.style.display = 'block';
+  statusMsg.textContent = `Bulk upload done — ${done} added${failed ? `, ${failed} failed` : ''}.`;
+  setTimeout(()=>{ statusMsg.style.display = 'none'; }, 3000);
+});
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  downloadEncryptedBackup(items.filter(it=>!it.deletedAt), 'vault-backup-full');
+});
+
+document.getElementById('bulkExportBtn').addEventListener('click', ()=>{
+  if(!selectedIds.size){ alert('Select at least one item first.'); return; }
+  const chosen = items.filter(it=>selectedIds.has(it.id));
+  downloadEncryptedBackup(chosen, 'vault-backup-selected');
 });
 
 const importFileInput = document.getElementById('importFile');
@@ -2006,8 +2827,23 @@ importFileInput.addEventListener('change', async (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   try{
-    const text = await file.text();
-    const parsed = JSON.parse(text);
+    const buf = new Uint8Array(await file.arrayBuffer());
+    let parsed;
+
+    // Support both new encrypted (.vaultbak) and old plain (.json) backups.
+    if(file.name.endsWith('.vaultbak')){
+      const password = prompt('Enter the password used to encrypt this backup:');
+      if(!password) return;
+      try{
+        parsed = await decryptBackup(buf, password);
+      }catch(e){
+        alert('Could not decrypt — wrong password, or the file is corrupted/not a valid backup.');
+        return;
+      }
+    } else {
+      parsed = JSON.parse(new TextDecoder().decode(buf));
+    }
+
     const incoming = Array.isArray(parsed) ? parsed : (parsed.items || []);
     if(!Array.isArray(incoming)) throw new Error('File does not look like a vault backup.');
 
@@ -2019,7 +2855,6 @@ importFileInput.addEventListener('change', async (e)=>{
     statusMsg.textContent = 'Restoring…';
 
     if(!mode){
-      // Replace: delete everything currently in the table first
       for(const it of items){ await deleteItem(it.id); }
     }
     let restored = 0;
@@ -2134,6 +2969,8 @@ document.getElementById('calConnectBtn').addEventListener('click', ()=>{
 // --- Google Drive / Docs / Sheets import (Google Picker API) ---
 // Reuses the same OAuth Client ID as Calendar, but needs its own token
 // client because the Drive scope is different from the Calendar scope.
+// Can be connected any time from the widget at the top of the page —
+// not just while adding an item.
 let gDriveTokenClient = null;
 let gDriveAccessToken = null;
 let pickerApiLoaded = false;
@@ -2156,7 +2993,9 @@ function initDriveAuth(clientId){
     callback: (resp)=>{
       if(resp && resp.access_token){
         gDriveAccessToken = resp.access_token;
-        ensurePickerLoaded(showDrivePicker);
+        setDriveConnectedUI(true);
+        if(pendingDriveAction === 'browse') ensurePickerLoaded(showDrivePicker);
+        pendingDriveAction = null;
       } else {
         alert('Could not connect to Google Drive — try again.');
       }
@@ -2165,10 +3004,47 @@ function initDriveAuth(clientId){
   return true;
 }
 
+function setDriveConnectedUI(connected){
+  document.getElementById('driveStatusLine').textContent = connected
+    ? 'Connected ✓ — pick a file any time.'
+    : 'Not connected yet — connect once, then import a Doc/Sheet/Drive file into any item, any time.';
+  document.getElementById('driveConnectBtn').textContent = connected ? 'Reconnect' : 'Connect';
+  document.getElementById('driveBrowseBtn').style.display = connected ? 'inline-block' : 'none';
+}
+
+// Ensures we have an OAuth client + token, prompting for the Client ID the
+// first time (shared with Calendar). `then` runs once a token is ready.
+let pendingDriveAction = null;
+function connectDrive(thenAction){
+  let clientId = getGoogleClientId();
+  if(!clientId){
+    clientId = prompt('Paste your Google OAuth Client ID (from Google Cloud Console → Credentials) — same one used for Calendar:');
+    if(!clientId) return;
+    localStorage.setItem('vault_google_client_id', clientId.trim());
+    clientId = clientId.trim();
+  }
+  if(!gDriveTokenClient){
+    const ok = initDriveAuth(clientId);
+    if(!ok){
+      alert('Google sign-in library not loaded yet — wait a second and try again.');
+      return;
+    }
+  }
+  pendingDriveAction = thenAction || null;
+  if(gDriveAccessToken){
+    // Already have a token this session — skip straight to the action.
+    setDriveConnectedUI(true);
+    if(thenAction === 'browse') ensurePickerLoaded(showDrivePicker);
+    pendingDriveAction = null;
+    return;
+  }
+  gDriveTokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
 function showDrivePicker(){
   const apiKey = getGoogleApiKey();
   if(!apiKey){
-    alert('One-time setup needed: paste a Google API key (from Google Cloud Console → Credentials → API key) to enable the Drive picker. See the setup guide for how to create one.');
+    alert('One-time setup needed: paste a Google API key (from Google Cloud Console → Credentials → API key) to enable the Drive picker.');
     const key = prompt('Paste your Google API key:');
     if(!key) return;
     localStorage.setItem('vault_google_api_key', key.trim());
@@ -2193,6 +3069,14 @@ function pickerCallback(data){
   if(data.action !== google.picker.Action.PICKED) return;
   const doc = data.docs[0];
   if(!doc) return;
+
+  // If the Add/Edit modal isn't already open (e.g. picked from the top
+  // widget), open a fresh "link" item for it so there's somewhere to land.
+  if(!document.getElementById('overlay').classList.contains('open')){
+    openModal(null);
+    setType('link');
+  }
+
   document.getElementById('fTitle').value = doc.name || '';
   document.getElementById('fUrl').value = doc.url || '';
   let tag = 'google-drive';
@@ -2206,23 +3090,12 @@ function pickerCallback(data){
   toast('Imported "' + (doc.name || 'file') + '" from Google Drive ✓');
 }
 
-document.getElementById('driveImportBtn').addEventListener('click', ()=>{
-  let clientId = getGoogleClientId();
-  if(!clientId){
-    clientId = prompt('Paste your Google OAuth Client ID (from Google Cloud Console → Credentials) — same one used for Calendar:');
-    if(!clientId) return;
-    localStorage.setItem('vault_google_client_id', clientId.trim());
-    clientId = clientId.trim();
-  }
-  if(!gDriveTokenClient){
-    const ok = initDriveAuth(clientId);
-    if(!ok){
-      alert('Google sign-in library not loaded yet — wait a second and try again.');
-      return;
-    }
-  }
-  gDriveTokenClient.requestAccessToken({ prompt: gDriveAccessToken ? '' : 'consent' });
-});
+// Widget buttons — connect any time, independent of the add-item flow.
+document.getElementById('driveConnectBtn').addEventListener('click', ()=> connectDrive());
+document.getElementById('driveBrowseBtn').addEventListener('click', ()=> connectDrive('browse'));
+
+// Modal button — same connect flow, then opens the picker straight into the open modal.
+document.getElementById('driveImportBtn').addEventListener('click', ()=> connectDrive('browse'));
 
 // --- Groups / Playlists row — now a nested folder browser.
 // Group names may contain "/" to express nesting, e.g. "Semester1/Accounting".
@@ -2333,8 +3206,13 @@ document.querySelectorAll('.section-tab').forEach(btn=>{
     document.querySelectorAll('.section-tab').forEach(b=>b.classList.toggle('active', b === btn));
     selectMode = false;
     selectedIds.clear();
+    binSelectMode = false;
+    binSelectedIds.clear();
     document.getElementById('selectModeBtn').textContent = '☑ Select';
     document.getElementById('bulkDeleteBtn').style.display = 'none';
+    document.getElementById('selectAllBtn').style.display = 'none';
+    document.getElementById('selectAllBtn').textContent = 'Select all';
+    loadCountdowns();
     render();
   });
 });
@@ -2357,19 +3235,40 @@ document.getElementById('selectModeBtn').addEventListener('click', ()=>{
   selectedIds.clear();
   document.getElementById('selectModeBtn').textContent = selectMode ? '✕ Cancel' : '☑ Select';
   document.getElementById('bulkDeleteBtn').style.display = selectMode ? 'inline-block' : 'none';
+  document.getElementById('bulkExportBtn').style.display = selectMode ? 'inline-block' : 'none';
+  document.getElementById('selectAllBtn').style.display = selectMode ? 'inline-block' : 'none';
   document.getElementById('bulkDeleteBtn').textContent = 'Delete selected (0)';
+  render();
+});
+
+// Selects/deselects every item currently visible in the grid (respects
+// whatever search/type/group/favourites filters are active).
+document.getElementById('selectAllBtn').addEventListener('click', ()=>{
+  const visibleIds = [...grid.querySelectorAll('.select-check')].map(cb=>cb.dataset.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id=>selectedIds.has(id));
+  if(allSelected){
+    visibleIds.forEach(id=>selectedIds.delete(id));
+  } else {
+    visibleIds.forEach(id=>selectedIds.add(id));
+  }
+  document.getElementById('selectAllBtn').textContent = allSelected ? 'Select all' : 'Deselect all';
+  document.getElementById('bulkDeleteBtn').textContent = `Delete selected (${selectedIds.size})`;
   render();
 });
 
 document.getElementById('bulkDeleteBtn').addEventListener('click', async ()=>{
   if(!selectedIds.size) return;
-  if(!confirm(`Delete ${selectedIds.size} selected item(s)? This can't be undone.`)) return;
+  if(!confirm(`Move ${selectedIds.size} selected item(s) to the Bin?`)) return;
   for(const id of [...selectedIds]){
     const ok = await deleteItem(id);
-    if(ok) items = items.filter(it=>it.id !== id);
+    if(ok){
+      const it = items.find(x=>x.id === id);
+      if(it) it.deletedAt = Date.now(); // soft delete — keep it in Bin, not gone entirely
+    }
   }
   selectedIds.clear();
   document.getElementById('bulkDeleteBtn').textContent = 'Delete selected (0)';
+  document.getElementById('selectAllBtn').textContent = 'Select all';
   render();
 });
 
@@ -2398,16 +3297,25 @@ async function updateStorageUsage(){
 
 // --- Search suggestions dropdown ---
 const searchSuggest = document.getElementById('searchSuggest');
+let searchDebounceTimer = null;
 searchInput.addEventListener('input', ()=>{
-  render();
-  const q = searchInput.value.trim().toLowerCase();
-  if(!q){ searchSuggest.style.display = 'none'; return; }
-  const matches = items.filter(it=>(it.title||'').toLowerCase().includes(q)).slice(0, 8);
-  if(!matches.length){ searchSuggest.style.display = 'none'; return; }
-  searchSuggest.innerHTML = matches.map(it=>
-    `<div class="suggest-row" data-title="${escapeAttr(it.title)}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px dashed var(--line);">${typeIcon(it.type)} ${escapeHtml(it.title)}</div>`
-  ).join('');
-  searchSuggest.style.display = 'block';
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(()=>{
+    if(aiSearchActive){
+      aiSearchActive = false;
+      aiSearchResultIds = null;
+      document.getElementById('aiSearchToggle').classList.remove('active');
+    }
+    render();
+    const q = searchInput.value.trim().toLowerCase();
+    if(!q){ searchSuggest.style.display = 'none'; return; }
+    const matches = items.filter(it=>(it.title||'').toLowerCase().includes(q)).slice(0, 8);
+    if(!matches.length){ searchSuggest.style.display = 'none'; return; }
+    searchSuggest.innerHTML = matches.map(it=>
+      `<div class="suggest-row" data-title="${escapeAttr(it.title)}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px dashed var(--line);">${typeIcon(it.type)} ${escapeHtml(it.title)}</div>`
+    ).join('');
+    searchSuggest.style.display = 'block';
+  }, 150);
 });
 searchSuggest.addEventListener('click', (e)=>{
   const row = e.target.closest('.suggest-row');
