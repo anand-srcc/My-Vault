@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <title>The Vault — Index</title>
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -484,7 +485,7 @@
       <h1>The Vault</h1>
       <div class="sub">Links, tools, notes, and pointers to your big files — one shelf, opens the same on your laptop and phone.</div>
     </div>
-    <button class="btn-secondary" id="darkModeToggle" title="Toggle dark mode">🌙</button>
+    <button class="btn-secondary" id="darkModeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
   </div>
 </header>
 
@@ -692,6 +693,15 @@
     <h2 id="modalTitle">New entry <button id="closeModal" aria-label="Close">✕</button></h2>
 
     <div class="field">
+      <label>Save to section</label>
+      <div class="type-grid" id="fSectionGrid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="type-opt" data-section="vault">🗂 Vault</div>
+        <div class="type-opt" data-section="exam">📚 Exam</div>
+        <div class="type-opt" data-section="ca">💼 CA</div>
+      </div>
+    </div>
+
+    <div class="field">
       <label>Type</label>
       <div class="type-grid" id="typeGrid">
         <div class="type-opt active" data-type="link">Link</div>
@@ -780,6 +790,7 @@
 let items = [];
 let editingId = null;
 let currentType = 'link';
+let currentFormSection = 'vault'; // section chosen inside the Add/Edit modal — independent of the page's active tab
 let sb = null; // supabase client
 let currentUser = null; // authenticated Supabase user, once signed in
 let storageMode = localStorage.getItem('vault_mode') || 'supabase'; // 'supabase' | 'local'
@@ -943,6 +954,7 @@ const overlay = document.getElementById('overlay');
 const searchInput = document.getElementById('searchInput');
 const typeFilter = document.getElementById('typeFilter');
 const typeGrid = document.getElementById('typeGrid');
+const fSectionGrid = document.getElementById('fSectionGrid');
 const urlField = document.getElementById('urlField');
 const loginOverlay = document.getElementById('loginOverlay');
 const userBadge = document.getElementById('userBadge');
@@ -979,6 +991,10 @@ function updateUserBadge(){
 let authBooted = false;
 async function bootSupabaseAuth(){
   sb.auth.onAuthStateChange((event, session)=>{
+    // Skip the very first callback (INITIAL_SESSION) — the manual
+    // getSession() call right below already performs the first load, so
+    // acting on both would fetch items twice on every page boot.
+    if(event === 'INITIAL_SESSION' && !authBooted) return;
     if(session && session.user){
       currentUser = session.user;
       hideLogin();
@@ -1455,12 +1471,12 @@ async function generateNotesForItem(id){
   const it = items.find(x=>x.id === id);
   if(!it || !it.url) return;
 
-  const overlay = document.getElementById('notesOverlay');
+  const notesOverlayEl = document.getElementById('notesOverlay');
   const body = document.getElementById('notesBody');
   document.getElementById('notesOverlayTitle').textContent = '📝 AI Notes — ' + it.title;
   document.getElementById('notesSaveBtn').style.display = 'none';
   body.textContent = 'Reading the file…';
-  overlay.style.display = 'flex';
+  notesOverlayEl.style.display = 'flex';
 
   try{
     const url = await resolveOpenUrl(it.url);
@@ -1499,7 +1515,7 @@ async function generateNotesForItem(id){
       if(row){
         loadItems();
         toast('Saved as a new note ✓');
-        overlay.style.display = 'none';
+        notesOverlayEl.style.display = 'none';
       }
     };
   }catch(e){
@@ -1589,7 +1605,7 @@ function renderCountdownWidget(){
     return `<div class="btn-secondary countdown-chip" data-id="${c.id}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;cursor:default;${urgent ? 'border-color:var(--stamp-red);color:var(--stamp-red);' : ''}">
       <div style="display:flex;align-items:center;gap:8px;width:100%;">
         <strong style="font-size:13px;">${escapeHtml(c.title)}</strong>
-        <button data-action="delcountdown" data-id="${c.id}" title="Remove" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;opacity:0.6;font-size:12px;">✕</button>
+        <button data-action="delcountdown" data-id="${c.id}" title="Remove" aria-label="Remove countdown" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;opacity:0.6;font-size:12px;">✕</button>
       </div>
       <span style="font-size:11.5px;">${label} · ${c.targetDate}</span>
       <button data-action="gencard" data-id="${c.id}" style="font-size:11px;padding:3px 8px;margin-top:4px;border:1px solid currentColor;background:none;color:inherit;border-radius:3px;cursor:pointer;">🖼 Generate card</button>
@@ -2006,7 +2022,7 @@ function buildCardEl(it, mode){
       <button data-action="share" data-id="${it.id}">Share</button>
       <button data-action="edit" data-id="${it.id}">Edit</button>
       <button data-action="del" class="del" data-id="${it.id}">Delete</button>
-      ${mode === 'recent' ? `<button data-action="removerecent" data-id="${it.id}" title="Remove from Recent">✕</button>` : ''}`;
+      ${mode === 'recent' ? `<button data-action="removerecent" data-id="${it.id}" title="Remove from Recent" aria-label="Remove from Recent">✕</button>` : ''}`;
   }
 
   card.innerHTML = `
@@ -2259,7 +2275,7 @@ grid.addEventListener('focusout', async (e)=>{
   const newVal = input.value.trim();
   if(newVal === (it.remark || '')) return;
   it.remark = newVal;
-  await updateItem(id, {type:it.type, title:it.title, url:it.url, notes:it.notes, tags:it.tags, subject:it.subject, subjectColor:it.subjectColor, dueDate:it.dueDate, pinned:it.pinned, section:it.section, groupName:it.groupName, remark:it.remark});
+  await updateItem(id, {type:it.type, title:it.title, url:it.url, notes:it.notes, tags:it.tags, subject:it.subject, subjectColor:it.subjectColor, dueDate:it.dueDate, pinned:it.pinned, section:it.section, groupName:it.groupName, remark:it.remark, isFavorite:it.isFavorite, fileHash:it.fileHash});
 });
 
 grid.addEventListener('keydown', (e)=>{
@@ -2379,7 +2395,7 @@ grid.addEventListener('click', (e)=>{
     const it = items.find(x=>x.id === id);
     if(it){
       it.pinned = !it.pinned;
-      updateItem(id, {type:it.type, title:it.title, url:it.url, notes:it.notes, tags:it.tags, subject:it.subject, subjectColor:it.subjectColor, dueDate:it.dueDate, pinned:it.pinned, section:it.section, groupName:it.groupName, remark:it.remark});
+      updateItem(id, {type:it.type, title:it.title, url:it.url, notes:it.notes, tags:it.tags, subject:it.subject, subjectColor:it.subjectColor, dueDate:it.dueDate, pinned:it.pinned, section:it.section, groupName:it.groupName, remark:it.remark, isFavorite:it.isFavorite, fileHash:it.fileHash});
       render();
     }
     return;
@@ -2547,6 +2563,18 @@ typeGrid.addEventListener('click', (e)=>{
   setType(opt.dataset.type);
 });
 
+function setFormSection(section){
+  currentFormSection = section;
+  [...fSectionGrid.children].forEach(el=>{
+    el.classList.toggle('active', el.dataset.section === section);
+  });
+}
+fSectionGrid.addEventListener('click', (e)=>{
+  const opt = e.target.closest('.type-opt');
+  if(!opt) return;
+  setFormSection(opt.dataset.section);
+});
+
 function openModal(id){
   editingId = id || null;
   const modalTitleText = document.getElementById('modalTitle');
@@ -2561,6 +2589,7 @@ function openModal(id){
   document.getElementById('fGroup').value = (!id && currentGroupPath.length) ? currentGroupPath.join('/') : '';
   document.getElementById('fDueDate').value = '';
   setType('link');
+  setFormSection(currentSection);
 
   if(id){
     const it = items.find(x=>x.id === id);
@@ -2577,6 +2606,7 @@ function openModal(id){
       document.getElementById('fGroup').value = it.groupName || '';
       document.getElementById('fDueDate').value = it.dueDate || '';
       setType(it.type || 'link');
+      setFormSection(it.section || 'vault');
     }
   } else {
     modalTitleText.firstChild.textContent = 'New entry ';
@@ -2655,7 +2685,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   const existingHash = editingId ? (items.find(x=>x.id===editingId)||{}).fileHash : null;
   const groupName = document.getElementById('fGroup').value.trim();
   const remark = document.getElementById('fRemark').value.trim();
-  const draft = { type: currentType, title, url, notes, tags, subject, subjectColor, dueDate, pinned: !!existingPinned, section: editingId ? (items.find(x=>x.id===editingId)||{}).section || currentSection : currentSection, groupName, remark, isFavorite: !!existingFav, fileHash: fileHash || existingHash || null };
+  const draft = { type: currentType, title, url, notes, tags, subject, subjectColor, dueDate, pinned: !!existingPinned, section: currentFormSection, groupName, remark, isFavorite: !!existingFav, fileHash: fileHash || existingHash || null };
 
   if(editingId){
     const ok = await updateItem(editingId, draft);
@@ -2667,8 +2697,9 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
     const row = await insertItem(draft);
     if(row){
       items.push({
-        id: row.id, type: row.type, title: row.title, url: row.url,
-        notes: row.notes, tags: row.tags || [], createdAt: new Date(row.created_at).getTime()
+        id: row.id, ...draft,
+        createdAt: new Date(row.created_at || Date.now()).getTime(),
+        deletedAt: null
       });
     }
   }
@@ -2861,7 +2892,11 @@ importFileInput.addEventListener('change', async (e)=>{
     for(const it of incoming){
       const row = await insertItem({
         type: it.type || 'other', title: it.title || 'Untitled',
-        url: it.url || '', notes: it.notes || '', tags: it.tags || []
+        url: it.url || '', notes: it.notes || '', tags: it.tags || [],
+        subject: it.subject || '', subjectColor: it.subjectColor || '#2f5a6b',
+        dueDate: it.dueDate || '', pinned: !!it.pinned,
+        section: it.section || 'vault', groupName: it.groupName || '',
+        remark: it.remark || '', isFavorite: !!it.isFavorite, fileHash: it.fileHash || null
       });
       if(row) restored++;
     }
@@ -2874,17 +2909,50 @@ importFileInput.addEventListener('change', async (e)=>{
   }
 });
 
-// --- Bookmarklet support: if opened with ?add=title&url=... , pre-open the add form ---
+// --- Share Target support: handles being opened via Android's native
+// "Share" sheet (Web Share Target sends standard title/text/url query
+// params) as well as the older ?quickadd=1&title=...&url=... bookmarklet
+// format. Always opens the Add form so the person explicitly picks the
+// Section (Vault/Exam/CA), Type, and Group/Topic — nothing is auto-saved,
+// and nothing is guessed for Group/Topic.
+function extractUrlFromText(text){
+  if(!text) return '';
+  const match = text.match(/https?:\/\/[^\s]+/i);
+  return match ? match[0] : '';
+}
+
 function handleQuickAdd(){
   const params = new URLSearchParams(window.location.search);
-  if(params.has('quickadd')){
-    setTimeout(()=>{
-      openModal(null);
-      document.getElementById('fTitle').value = params.get('title') || '';
-      document.getElementById('fUrl').value = params.get('url') || '';
-      setType('link');
-    }, 500);
+  const hasShareParams = params.has('quickadd') || params.has('title') || params.has('text') || params.has('url');
+  if(!hasShareParams) return;
+
+  const rawTitle = params.get('title') || '';
+  const rawText = params.get('text') || '';
+  const rawUrl = params.get('url') || '';
+
+  // Instagram/LinkedIn/etc. usually put the link inside "text" alongside a
+  // caption and leave "url" empty, so fall back to pulling a URL out of
+  // "text" (or use "text" itself if it's nothing but a bare URL).
+  const url = rawUrl || extractUrlFromText(rawText) || (/^https?:\/\/\S+$/i.test(rawText.trim()) ? rawText.trim() : '');
+  let title = rawTitle || rawText.replace(url, '').trim();
+  if(!title && url){
+    try{ title = new URL(url).hostname.replace(/^www\./, ''); }catch(e){ title = ''; }
   }
+
+  setTimeout(()=>{
+    openModal(null);
+    document.getElementById('fTitle').value = title;
+    document.getElementById('fUrl').value = url;
+    document.getElementById('fGroup').value = ''; // never guess a topic/group — the person picks it
+    setType('link');
+    // Section defaults to the currently active tab (openModal already set
+    // it above) but stays clearly visible and editable in the modal, so
+    // nothing gets filed into the wrong section silently.
+    toast('Shared item — pick a Section, Type & Group, then Save');
+    // Strip the share params from the URL so refreshing or re-opening the
+    // app later doesn't reopen this same pre-filled form again.
+    window.history.replaceState({}, '', window.location.pathname);
+  }, 500);
 }
 
 // --- Google Calendar (read-only) ---
