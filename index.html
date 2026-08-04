@@ -279,6 +279,24 @@
   .card.type-archive{ background:#ecdfd0; border-left-color:#8a5a2f; }
   .card.type-other{ background:#e3e5ea; border-left-color:#3c4657; }
   .card{ color:#1c2430; }
+  body.dark-mode .card{ color:var(--ink); }
+  body.dark-mode .card.type-link{ background:#1e2f35; }
+  body.dark-mode .card.type-tool{ background:#1e2b1e; }
+  body.dark-mode .card.type-note{ background:#2e2518; }
+  body.dark-mode .card.type-pdf{ background:#2e1f1a; }
+  body.dark-mode .card.type-video{ background:#261e30; }
+  body.dark-mode .card.type-photo{ background:#1a2b28; }
+  body.dark-mode .card.type-word{ background:#1e2435; }
+  body.dark-mode .card.type-excel{ background:#1e2e22; }
+  body.dark-mode .card.type-powerpoint{ background:#2e2018; }
+  body.dark-mode .card.type-html{ background:#2a2218; }
+  body.dark-mode .card.type-markdown{ background:#24262b; }
+  body.dark-mode .card.type-txt{ background:#252525; }
+  body.dark-mode .card.type-csv{ background:#1e2e22; }
+  body.dark-mode .card.type-rtf{ background:#24203a; }
+  body.dark-mode .card.type-opendocument{ background:#2e2518; }
+  body.dark-mode .card.type-archive{ background:#2a2218; }
+  body.dark-mode .card.type-other{ background:#24262b; }
   .remark-inline{ display:flex; align-items:center; gap:6px; padding-left:18px; margin:4px 0; }
   .remark-inline-input{
     flex:1; font-size:12.5px; padding:6px 10px; border-radius:14px;
@@ -526,19 +544,19 @@
   <div class="bar">
     <div class="toolbar-group toolbar-group--search">
       <div class="search-slot" style="position:relative;">
-        <input type="text" id="searchInput" placeholder="Search title, tags, notes…" autocomplete="off">
+        <input type="text" id="searchInput" placeholder="Search title, tags, notes…" autocomplete="off" aria-label="Search items">
         <div id="searchSuggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper-card);border:1px solid var(--ink);border-top:none;z-index:20;max-height:220px;overflow-y:auto;"></div>
       </div>
       <button class="btn-secondary" id="aiSearchToggle" title="Ask in plain English instead of keyword matching">✨ AI Search</button>
     </div>
 
     <div class="toolbar-group">
-      <select class="type-filter" id="sortSelect">
+      <select class="type-filter" id="sortSelect" aria-label="Sort order">
         <option value="newest">Newest first</option>
         <option value="due">Upcoming deadline</option>
         <option value="pinned">Pinned first</option>
       </select>
-      <select class="type-filter" id="typeFilter">
+      <select class="type-filter" id="typeFilter" aria-label="Filter by type">
         <option value="all">All types</option>
         <option value="link">Link</option>
         <option value="tool">Tool</option>
@@ -596,7 +614,7 @@
   <div class="grid" id="grid"></div>
   <div class="overlay" id="photoOverlay" style="display:none;" onclick="if(event.target===this)this.style.display='none';">
     <div style="max-width:90vw;max-height:85vh;">
-      <img id="photoPreviewImg" style="max-width:90vw;max-height:80vh;display:block;border:2px solid var(--paper-card);border-radius:3px;">
+      <img id="photoPreviewImg" alt="Photo preview" style="max-width:90vw;max-height:80vh;display:block;border:2px solid var(--paper-card);border-radius:3px;">
       <div style="text-align:center;margin-top:8px;"><button class="btn-secondary" onclick="document.getElementById('photoOverlay').style.display='none';">Close</button></div>
     </div>
   </div>
@@ -694,33 +712,33 @@
 
     <div class="field">
       <label>Save to section</label>
-      <div class="type-grid" id="fSectionGrid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="type-opt" data-section="vault">🗂 Vault</div>
-        <div class="type-opt" data-section="exam">📚 Exam</div>
-        <div class="type-opt" data-section="ca">💼 CA</div>
+      <div class="type-grid" id="fSectionGrid" style="grid-template-columns:repeat(3,1fr);" role="radiogroup" aria-label="Save to section">
+        <div class="type-opt" data-section="vault" tabindex="0" role="radio">🗂 Vault</div>
+        <div class="type-opt" data-section="exam" tabindex="0" role="radio">📚 Exam</div>
+        <div class="type-opt" data-section="ca" tabindex="0" role="radio">💼 CA</div>
       </div>
     </div>
 
     <div class="field">
       <label>Type</label>
-      <div class="type-grid" id="typeGrid">
-        <div class="type-opt active" data-type="link">Link</div>
-        <div class="type-opt" data-type="tool">Tool</div>
-        <div class="type-opt" data-type="note">Note</div>
-        <div class="type-opt" data-type="pdf">PDF</div>
-        <div class="type-opt" data-type="word">Word</div>
-        <div class="type-opt" data-type="excel">Excel</div>
-        <div class="type-opt" data-type="powerpoint">PowerPoint</div>
-        <div class="type-opt" data-type="html">HTML</div>
-        <div class="type-opt" data-type="markdown">Markdown</div>
-        <div class="type-opt" data-type="txt">TXT</div>
-        <div class="type-opt" data-type="csv">CSV</div>
-        <div class="type-opt" data-type="rtf">RTF</div>
-        <div class="type-opt" data-type="opendocument">ODT/ODS/ODP</div>
-        <div class="type-opt" data-type="video">Video</div>
-        <div class="type-opt" data-type="photo">Photo</div>
-        <div class="type-opt" data-type="archive">Archive/Zip</div>
-        <div class="type-opt" data-type="other">Other</div>
+      <div class="type-grid" id="typeGrid" role="radiogroup" aria-label="Item type">
+        <div class="type-opt active" data-type="link" tabindex="0" role="radio" aria-checked="true">Link</div>
+        <div class="type-opt" data-type="tool" tabindex="0" role="radio">Tool</div>
+        <div class="type-opt" data-type="note" tabindex="0" role="radio">Note</div>
+        <div class="type-opt" data-type="pdf" tabindex="0" role="radio">PDF</div>
+        <div class="type-opt" data-type="word" tabindex="0" role="radio">Word</div>
+        <div class="type-opt" data-type="excel" tabindex="0" role="radio">Excel</div>
+        <div class="type-opt" data-type="powerpoint" tabindex="0" role="radio">PowerPoint</div>
+        <div class="type-opt" data-type="html" tabindex="0" role="radio">HTML</div>
+        <div class="type-opt" data-type="markdown" tabindex="0" role="radio">Markdown</div>
+        <div class="type-opt" data-type="txt" tabindex="0" role="radio">TXT</div>
+        <div class="type-opt" data-type="csv" tabindex="0" role="radio">CSV</div>
+        <div class="type-opt" data-type="rtf" tabindex="0" role="radio">RTF</div>
+        <div class="type-opt" data-type="opendocument" tabindex="0" role="radio">ODT/ODS/ODP</div>
+        <div class="type-opt" data-type="video" tabindex="0" role="radio">Video</div>
+        <div class="type-opt" data-type="photo" tabindex="0" role="radio">Photo</div>
+        <div class="type-opt" data-type="archive" tabindex="0" role="radio">Archive/Zip</div>
+        <div class="type-opt" data-type="other" tabindex="0" role="radio">Other</div>
       </div>
     </div>
 
@@ -790,7 +808,7 @@
 let items = [];
 let editingId = null;
 let currentType = 'link';
-let currentFormSection = 'vault'; // section chosen inside the Add/Edit modal — independent of the page's active tab
+let currentFormSection = 'vault';
 let sb = null; // supabase client
 let currentUser = null; // authenticated Supabase user, once signed in
 let storageMode = localStorage.getItem('vault_mode') || 'supabase'; // 'supabase' | 'local'
@@ -977,6 +995,7 @@ function showLogin(){
 function hideLogin(){
   loginOverlay.style.display = 'none';
   document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('loginErr').style.color = '';
   document.getElementById('loginPassword').value = '';
 }
 
@@ -1471,12 +1490,12 @@ async function generateNotesForItem(id){
   const it = items.find(x=>x.id === id);
   if(!it || !it.url) return;
 
-  const notesOverlayEl = document.getElementById('notesOverlay');
+  const overlay = document.getElementById('notesOverlay');
   const body = document.getElementById('notesBody');
   document.getElementById('notesOverlayTitle').textContent = '📝 AI Notes — ' + it.title;
   document.getElementById('notesSaveBtn').style.display = 'none';
   body.textContent = 'Reading the file…';
-  notesOverlayEl.style.display = 'flex';
+  overlay.style.display = 'flex';
 
   try{
     const url = await resolveOpenUrl(it.url);
@@ -1515,7 +1534,7 @@ async function generateNotesForItem(id){
       if(row){
         loadItems();
         toast('Saved as a new note ✓');
-        notesOverlayEl.style.display = 'none';
+        overlay.style.display = 'none';
       }
     };
   }catch(e){
@@ -1605,7 +1624,7 @@ function renderCountdownWidget(){
     return `<div class="btn-secondary countdown-chip" data-id="${c.id}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 12px;cursor:default;${urgent ? 'border-color:var(--stamp-red);color:var(--stamp-red);' : ''}">
       <div style="display:flex;align-items:center;gap:8px;width:100%;">
         <strong style="font-size:13px;">${escapeHtml(c.title)}</strong>
-        <button data-action="delcountdown" data-id="${c.id}" title="Remove" aria-label="Remove countdown" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;opacity:0.6;font-size:12px;">✕</button>
+        <button data-action="delcountdown" data-id="${c.id}" title="Remove" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;opacity:0.6;font-size:12px;">✕</button>
       </div>
       <span style="font-size:11.5px;">${label} · ${c.targetDate}</span>
       <button data-action="gencard" data-id="${c.id}" style="font-size:11px;padding:3px 8px;margin-top:4px;border:1px solid currentColor;background:none;color:inherit;border-radius:3px;cursor:pointer;">🖼 Generate card</button>
@@ -1997,7 +2016,9 @@ function buildCardEl(it, mode){
   const dueHtml = it.dueDate ? `<span class="due-badge">${dueSoon ? '⚠ ' : ''}${dueCountdown(it.dueDate)}</span>` : '';
   let openControl = '';
   if(hasUrl){
-    if(it.type === 'html'){
+    if(it.type === 'photo'){
+      openControl = `<button data-action="openphoto" data-url="${escapeAttr(it.url)}" data-id="${it.id}">Open</button>`;
+    } else if(it.type === 'html'){
       openControl = `<button data-action="openhtml" data-url="${escapeAttr(it.url)}" data-id="${it.id}">Open</button>`;
     } else if(it.url.startsWith('sb:')){
       openControl = `<button data-action="openfile" data-url="${escapeAttr(it.url)}" data-id="${it.id}">Open</button>`;
@@ -2022,7 +2043,7 @@ function buildCardEl(it, mode){
       <button data-action="share" data-id="${it.id}">Share</button>
       <button data-action="edit" data-id="${it.id}">Edit</button>
       <button data-action="del" class="del" data-id="${it.id}">Delete</button>
-      ${mode === 'recent' ? `<button data-action="removerecent" data-id="${it.id}" title="Remove from Recent" aria-label="Remove from Recent">✕</button>` : ''}`;
+      ${mode === 'recent' ? `<button data-action="removerecent" data-id="${it.id}" title="Remove from Recent">✕</button>` : ''}`;
   }
 
   card.innerHTML = `
@@ -2404,7 +2425,8 @@ grid.addEventListener('click', (e)=>{
     if(confirm('Delete this entry?')){
       deleteItem(id).then(ok=>{
         if(ok){
-          items = items.filter(it=>it.id !== id);
+          const it = items.find(x=>x.id === id);
+          if(it) it.deletedAt = Date.now();
           render();
         }
       });
@@ -2466,6 +2488,7 @@ async function checkDueReminders(){
   const now = Date.now();
   for(const it of items){
     if(!it.dueDate) continue;
+    if(it.deletedAt) continue;
     const due = new Date(it.dueDate + 'T09:00:00').getTime();
     const hoursLeft = (due - now) / 3600000;
     if(hoursLeft > 0 && hoursLeft <= 24 && !notified[it.id]){
@@ -2474,6 +2497,13 @@ async function checkDueReminders(){
     }
   }
   localStorage.setItem('vault_notified', JSON.stringify(notified));
+  // Prune stale entries to prevent unbounded growth
+  const activeIds = new Set(items.map(it=>it.id));
+  const pruned = {};
+  for(const [k,v] of Object.entries(notified)){
+    if(activeIds.has(k)) pruned[k] = v;
+  }
+  localStorage.setItem('vault_notified', JSON.stringify(pruned));
 }
 setTimeout(checkDueReminders, 3000);
 setInterval(checkDueReminders, 30 * 60 * 1000);
@@ -2483,7 +2513,9 @@ const UPLOAD_TYPES = ['photo', 'pdf', 'word', 'excel', 'powerpoint', 'html', 'ma
 function setType(type){
   currentType = type;
   [...typeGrid.children].forEach(el=>{
-    el.classList.toggle('active', el.dataset.type === type);
+    const isActive = el.dataset.type === type;
+    el.classList.toggle('active', isActive);
+    el.setAttribute('aria-checked', isActive ? 'true' : 'false');
   });
 
   const fileField = document.getElementById('fileField');
@@ -2563,16 +2595,37 @@ typeGrid.addEventListener('click', (e)=>{
   setType(opt.dataset.type);
 });
 
-function setFormSection(section){
-  currentFormSection = section;
+function updateSectionGrid(){
   [...fSectionGrid.children].forEach(el=>{
-    el.classList.toggle('active', el.dataset.section === section);
+    const isActive = el.dataset.section === currentFormSection;
+    el.classList.toggle('active', isActive);
+    el.setAttribute('aria-checked', isActive ? 'true' : 'false');
   });
 }
 fSectionGrid.addEventListener('click', (e)=>{
   const opt = e.target.closest('.type-opt');
-  if(!opt) return;
-  setFormSection(opt.dataset.section);
+  if(!opt || !opt.dataset.section) return;
+  currentFormSection = opt.dataset.section;
+  updateSectionGrid();
+});
+
+// Keyboard accessibility for type-opt divs (Enter/Space activates)
+typeGrid.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' '){
+    const opt = e.target.closest('.type-opt');
+    if(!opt) return;
+    e.preventDefault();
+    setType(opt.dataset.type);
+  }
+});
+fSectionGrid.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' '){
+    const opt = e.target.closest('.type-opt');
+    if(!opt || !opt.dataset.section) return;
+    e.preventDefault();
+    currentFormSection = opt.dataset.section;
+    updateSectionGrid();
+  }
 });
 
 function openModal(id){
@@ -2589,12 +2642,15 @@ function openModal(id){
   document.getElementById('fGroup').value = (!id && currentGroupPath.length) ? currentGroupPath.join('/') : '';
   document.getElementById('fDueDate').value = '';
   setType('link');
-  setFormSection(currentSection);
+  currentFormSection = currentSection;
+  updateSectionGrid();
 
   if(id){
     const it = items.find(x=>x.id === id);
     if(it){
       modalTitleText.firstChild.textContent = 'Edit entry ';
+      currentFormSection = it.section || 'vault';
+      updateSectionGrid();
       document.getElementById('fTitle').value = it.title || '';
       document.getElementById('fUrl').value = it.url || '';
       document.getElementById('fNotes').value = it.notes || '';
@@ -2606,7 +2662,6 @@ function openModal(id){
       document.getElementById('fGroup').value = it.groupName || '';
       document.getElementById('fDueDate').value = it.dueDate || '';
       setType(it.type || 'link');
-      setFormSection(it.section || 'vault');
     }
   } else {
     modalTitleText.firstChild.textContent = 'New entry ';
@@ -2685,7 +2740,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
   const existingHash = editingId ? (items.find(x=>x.id===editingId)||{}).fileHash : null;
   const groupName = document.getElementById('fGroup').value.trim();
   const remark = document.getElementById('fRemark').value.trim();
-  const draft = { type: currentType, title, url, notes, tags, subject, subjectColor, dueDate, pinned: !!existingPinned, section: currentFormSection, groupName, remark, isFavorite: !!existingFav, fileHash: fileHash || existingHash || null };
+  const draft = { type: currentType, title, url, notes, tags, subject, subjectColor, dueDate, pinned: !!existingPinned, section: editingId ? currentFormSection : currentFormSection, groupName, remark, isFavorite: !!existingFav, fileHash: fileHash || existingHash || null };
 
   if(editingId){
     const ok = await updateItem(editingId, draft);
@@ -2697,7 +2752,8 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
     const row = await insertItem(draft);
     if(row){
       items.push({
-        id: row.id, ...draft,
+        ...draft,
+        id: row.id,
         createdAt: new Date(row.created_at || Date.now()).getTime(),
         deletedAt: null
       });
@@ -2708,7 +2764,13 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
 });
 
 document.addEventListener('keydown', (e)=>{
-  if(e.key === 'Escape' && overlay.classList.contains('open')) closeModalFn();
+  if(e.key === 'Escape'){
+    if(overlay.classList.contains('open')){ closeModalFn(); return; }
+    if(document.getElementById('aiOverlay').style.display === 'flex'){ document.getElementById('aiOverlay').style.display = 'none'; return; }
+    if(document.getElementById('notesOverlay').style.display === 'flex'){ document.getElementById('notesOverlay').style.display = 'none'; return; }
+    if(document.getElementById('cardOverlay').style.display === 'flex'){ document.getElementById('cardOverlay').style.display = 'none'; return; }
+    if(document.getElementById('photoOverlay').style.display !== 'none'){ document.getElementById('photoOverlay').style.display = 'none'; return; }
+  }
 });
 
 // --- Export / Import (local backup, independent of Claude's storage) ---
@@ -2886,17 +2948,18 @@ importFileInput.addEventListener('change', async (e)=>{
     statusMsg.textContent = 'Restoring…';
 
     if(!mode){
-      for(const it of items){ await deleteItem(it.id); }
+      for(const it of items){ await permanentlyDeleteItem(it.id); }
     }
     let restored = 0;
     for(const it of incoming){
       const row = await insertItem({
         type: it.type || 'other', title: it.title || 'Untitled',
         url: it.url || '', notes: it.notes || '', tags: it.tags || [],
-        subject: it.subject || '', subjectColor: it.subjectColor || '#2f5a6b',
+        subject: it.subject || '', subjectColor: it.subjectColor || '',
         dueDate: it.dueDate || '', pinned: !!it.pinned,
-        section: it.section || 'vault', groupName: it.groupName || '',
-        remark: it.remark || '', isFavorite: !!it.isFavorite, fileHash: it.fileHash || null
+        section: it.section || currentSection,
+        groupName: it.groupName || '', remark: it.remark || '',
+        isFavorite: !!it.isFavorite, fileHash: it.fileHash || null
       });
       if(row) restored++;
     }
@@ -2909,50 +2972,17 @@ importFileInput.addEventListener('change', async (e)=>{
   }
 });
 
-// --- Share Target support: handles being opened via Android's native
-// "Share" sheet (Web Share Target sends standard title/text/url query
-// params) as well as the older ?quickadd=1&title=...&url=... bookmarklet
-// format. Always opens the Add form so the person explicitly picks the
-// Section (Vault/Exam/CA), Type, and Group/Topic — nothing is auto-saved,
-// and nothing is guessed for Group/Topic.
-function extractUrlFromText(text){
-  if(!text) return '';
-  const match = text.match(/https?:\/\/[^\s]+/i);
-  return match ? match[0] : '';
-}
-
+// --- Bookmarklet support: if opened with ?add=title&url=... , pre-open the add form ---
 function handleQuickAdd(){
   const params = new URLSearchParams(window.location.search);
-  const hasShareParams = params.has('quickadd') || params.has('title') || params.has('text') || params.has('url');
-  if(!hasShareParams) return;
-
-  const rawTitle = params.get('title') || '';
-  const rawText = params.get('text') || '';
-  const rawUrl = params.get('url') || '';
-
-  // Instagram/LinkedIn/etc. usually put the link inside "text" alongside a
-  // caption and leave "url" empty, so fall back to pulling a URL out of
-  // "text" (or use "text" itself if it's nothing but a bare URL).
-  const url = rawUrl || extractUrlFromText(rawText) || (/^https?:\/\/\S+$/i.test(rawText.trim()) ? rawText.trim() : '');
-  let title = rawTitle || rawText.replace(url, '').trim();
-  if(!title && url){
-    try{ title = new URL(url).hostname.replace(/^www\./, ''); }catch(e){ title = ''; }
+  if(params.has('quickadd')){
+    setTimeout(()=>{
+      openModal(null);
+      document.getElementById('fTitle').value = params.get('title') || '';
+      document.getElementById('fUrl').value = params.get('url') || '';
+      setType('link');
+    }, 500);
   }
-
-  setTimeout(()=>{
-    openModal(null);
-    document.getElementById('fTitle').value = title;
-    document.getElementById('fUrl').value = url;
-    document.getElementById('fGroup').value = ''; // never guess a topic/group — the person picks it
-    setType('link');
-    // Section defaults to the currently active tab (openModal already set
-    // it above) but stays clearly visible and editable in the modal, so
-    // nothing gets filed into the wrong section silently.
-    toast('Shared item — pick a Section, Type & Group, then Save');
-    // Strip the share params from the URL so refreshing or re-opening the
-    // app later doesn't reopen this same pre-filled form again.
-    window.history.replaceState({}, '', window.location.pathname);
-  }, 500);
 }
 
 // --- Google Calendar (read-only) ---
@@ -3346,8 +3376,9 @@ async function updateStorageUsage(){
   if(!sb || storageMode === 'local'){ el.textContent = ''; return; }
   try{
     const kinds = ['photo','pdf','word','excel','powerpoint','html','markdown','txt','csv','rtf','opendocument','archive','other'];
+    const ownerId = currentUser ? currentUser.id : 'unknown';
     const results = await Promise.all(
-      kinds.map(k => sb.storage.from(BUCKET).list(k, { limit: 1000 }).catch(()=>({data:null})))
+      kinds.map(k => sb.storage.from(BUCKET).list(ownerId + '/' + k, { limit: 1000 }).catch(()=>({data:null})))
     );
     let totalBytes = 0;
     for(const { data } of results){
@@ -3377,7 +3408,7 @@ searchInput.addEventListener('input', ()=>{
     render();
     const q = searchInput.value.trim().toLowerCase();
     if(!q){ searchSuggest.style.display = 'none'; return; }
-    const matches = items.filter(it=>(it.title||'').toLowerCase().includes(q)).slice(0, 8);
+    const matches = items.filter(it=>!it.deletedAt && (it.section||'vault')===currentSection && (it.title||'').toLowerCase().includes(q)).slice(0, 8);
     if(!matches.length){ searchSuggest.style.display = 'none'; return; }
     searchSuggest.innerHTML = matches.map(it=>
       `<div class="suggest-row" data-title="${escapeAttr(it.title)}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px dashed var(--line);">${typeIcon(it.type)} ${escapeHtml(it.title)}</div>`
@@ -3405,6 +3436,11 @@ if(storageMode === 'local'){
   handleQuickAdd();
 } else {
   document.getElementById('setupOverlay').style.display = 'flex';
+}
+
+// --- Register Service Worker for PWA / Add to Home Screen ---
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
 
